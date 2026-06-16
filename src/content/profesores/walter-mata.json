@@ -1,0 +1,253 @@
+{
+  "slug": "walter-mata",
+  "fullName": "Walter Alexander Mata López",
+  "photoUrl": "/images/profesores/walter-mata.jpg",
+  "title": "Profesor Investigador de Tiempo Completo",
+  "department": "Facultad de Ingeniería Mecánica y Eléctrica",
+  "institutionalEmail": "wmata@ucol.mx",
+  "admissionYear": 1997,
+  "academicFormation": {
+    "doctorados": [
+      {
+        "degree": "Doctor en Tecnología Educativa",
+        "institution": "",
+        "year": 2025
+      },
+      {
+        "degree": "Doctor en Educación",
+        "institution": "",
+        "year": 2020
+      }
+    ],
+    "maestrias": [
+      {
+        "degree": "Maestría en Computación",
+        "institution": "",
+        "year": 2005
+      }
+    ],
+    "licenciatura": {
+      "degree": "Ingeniero en Sistemas Computacionales",
+      "institution": "Instituto Tecnológico de Colima",
+      "year": 1995
+    }
+  },
+  "scientificProduction": {
+    "articles": [
+      {
+        "title": "Neuro-Fuzzy System to Predict Timely Harvest in Stevia Crops",
+        "journal": "Agriculture",
+        "year": 2025,
+        "impactFactor": 3.6,
+        "doi": "https://www.mdpi.com/2077-0472/15/8/840"
+      },
+      {
+        "title": "Propuesta conceptual de una arquitectura para un asistente de predicción de glucosa (GPA) basada en la revisión de la literatura",
+        "journal": "Ingeniantes",
+        "year": 2025,
+        "impactFactor": null,
+        "doi": "https://citt.itsm.edu.mx/ingeniantes/revista12no2v"
+      },
+      {
+        "title": "SmartReview: Revisión Inteligente de Literatura Científica Asistida Localmente",
+        "journal": "Ingeniantes",
+        "year": 2025,
+        "impactFactor": null,
+        "doi": "https://citt.itsm.edu.mx/ingeniantes/revista12no2v"
+      },
+      {
+        "title": "Diseño de Sistema Web de Trazabilidad para Automatizar la Gestión de los Procesos de Producción y Venta de la Nuez de Macadamia en el Rancho Chantoro",
+        "journal": "Electro",
+        "year": 2024,
+        "impactFactor": null,
+        "doi": "https://itchihuahua.mx/revista_electro/2024/A24_28"
+      },
+      {
+        "title": "Learning analytics from audiovisual educational resources: a proposal for an architectural platform",
+        "journal": "Tecnología y Ciencia Aplicada",
+        "year": 2024,
+        "impactFactor": null,
+        "doi": "https://jcyta.cenidet.tecnm.mx/revistas/tycap/13-V"
+      },
+      {
+        "title": "Transforming Education: An Automated Platform for Personalized Content Generation",
+        "journal": "Tecnología y Ciencia Aplicada",
+        "year": 2024,
+        "impactFactor": null,
+        "doi": "https://jcyta.cenidet.tecnm.mx/revistas/tycap/13-V"
+      },
+      {
+        "title": "Towards Personalized Education: Implementing Large Language Models and RAG for Active Learning",
+        "journal": "Tecnología y Ciencia Aplicada",
+        "year": 2024,
+        "impactFactor": null,
+        "doi": "https://jcyta.cenidet.tecnm.mx/revistas/tycap/13-V"
+      },
+      {
+        "title": "Automated Generation of Educational Content from Teaching-Learning Records: A Literature Review and Architectural Proposal",
+        "journal": "Tecnología y Ciencia Aplicada",
+        "year": 2024,
+        "impactFactor": null,
+        "doi": "https://jcyta.cenidet.tecnm.mx/revistas/tycap/13-V"
+      },
+      {
+        "title": "Comparative Analysis of Fuzzy Logic Models in Predicting Macadamia Nut Yield Accuracy and Eficiency",
+        "journal": "Tecnología y Ciencia Aplicada",
+        "year": 2024,
+        "impactFactor": null,
+        "doi": "https://jcyta.cenidet.tecnm.mx/revistas/tycap/13-V"
+      },
+      {
+        "title": "Fast Parabolic Fitting: An R-Peak Detection Algorithm for Wearable ECG Devices",
+        "journal": "Sensors",
+        "year": 2023,
+        "impactFactor": 3.9,
+        "doi": "https://www.mdpi.com/1424-8220/23/21/8796"
+      }
+    ],
+    "books": [
+      {
+        "title": "El aula Inteligente",
+        "role": "Coordinador",
+        "editorial": "Docencia Digital",
+        "year": 2025
+      },
+      {
+        "title": "Aplicaciones Inteligentes en la Ingeniería del Futuro",
+        "role": "Coautor",
+        "editorial": "Hambatu Sapiens",
+        "year": 2025
+      },
+      {
+        "title": "Innovación Educativa y Sostenibilidad. Nuevas Perspectivas para un Futuro Responsable",
+        "role": "Coautor",
+        "editorial": "Hambatu Sapiens",
+        "year": 2025
+      },
+      {
+        "title": "Pensamiento algorítmico y programación con Java, Aplicaciones para ingeniería",
+        "role": "Coautor",
+        "editorial": "Universidad de Colima",
+        "year": 2024
+      }
+    ]
+  },
+  "educationalMaterials": [
+    {
+      "title": "Fundamentos de algoritmos con diagramas de flujo de datos (Parte 4)",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/739"
+    },
+    {
+      "title": "Fundamentos de algoritmos con diagramas de flujo de datos (Parte 3)",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/729"
+    },
+    {
+      "title": "Fundamentos de algoritmos con diagramas de flujo de datos (Parte 2)",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/725"
+    },
+    {
+      "title": "Fundamentos de algoritmos con diagramas de Flujo de datos (Parte 1)",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/707"
+    }
+  ],
+  "teaching": {
+    "courses": [
+      {
+        "name": "Programación Funcional",
+        "level": "Licenciatura",
+        "students": 29,
+        "period": "Ago-Ene 2025"
+      },
+      {
+        "name": "Fundamentos de Programación",
+        "level": "Licenciatura",
+        "students": 55,
+        "period": "Ago-Ene 2025"
+      },
+      {
+        "name": "Optativa Iii: Fundamentos",
+        "level": "Licenciatura",
+        "students": 22,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Optativa I: Fundamentos",
+        "level": "Licenciatura",
+        "students": 23,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Programación Estructurada",
+        "level": "Licenciatura",
+        "students": 28,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Programación para IA y CD",
+        "level": "Maestría",
+        "students": 2,
+        "period": "Ago-Ene 2025"
+      },
+      {
+        "name": "Minería de Datos",
+        "level": "Maestría",
+        "students": 1,
+        "period": "Feb-Jul 2025"
+      }
+    ],
+    "theses": [
+      {
+        "student": "Ana Isabel Sánchez Heredia, Rafael Zamora Guerrero y Jesús Emilio Manzano Morales",
+        "title": "I-learning (Intelligent Learning) Aprendizaje Asistido por Inteligencia Artificial",
+        "year": 2025,
+        "role": "Asesor"
+      },
+      {
+        "student": "Carmen Itzel Chavez Rodriguez",
+        "title": "Diseño de un prototipo de una aplicación móvil para el control de ganado",
+        "year": 2025,
+        "role": "Asesor"
+      },
+      {
+        "student": "Gabriel Alejandro Gudiño Méndez, Víctor Jesús Martínez Pérez y José Ramon Preciado Torres",
+        "title": "Análisis e interpretación de Electrocardiogramas mediante Redes Neuronales",
+        "year": 2025,
+        "role": "Asesor"
+      }
+    ]
+  },
+  "certifications": [
+    {
+      "title": "Diplomado en Línea Agentes TIC: Competencias Digitales Docentes",
+      "institution": "Universidad de Colima",
+      "year": 2020
+    },
+    {
+      "title": "Diplomado Agentes TIC: Prácticas Educativas con Inteligencia Artificial",
+      "institution": "Universidad de Colima",
+      "year": 2023
+    },
+    {
+      "title": "Big Data en Educación",
+      "institution": "Anáhuac",
+      "year": 2024
+    },
+    {
+      "title": "Diplomado Internacional: \"Inteligencia Artificial Educativa\" 2da Edición",
+      "institution": "Centro Universitario Mar de Cortés",
+      "year": 2025
+    }
+  ],
+  "academicBody": {
+    "name": "Automatización y Sistemas",
+    "level": "CAEC"
+  }
+}

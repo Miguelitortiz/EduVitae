@@ -1,0 +1,74 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  slug?: string;
+}
+
+const { 
+  title, 
+  description = "Directorio de perfiles académicos de profesores investigadores. Información curricular y de producción científica.",
+  slug
+} = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | EduVitae</title>
+    <meta name="description" content={description} />
+    
+    <!-- SEO & OpenGraph Meta Tags -->
+    <meta property="og:title" content={`${title} | EduVitae`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    
+    <!-- Cache-Control and Optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  </head>
+  <body class="bg-bg-papel text-text-marino min-h-screen flex flex-col font-sans">
+    <!-- Banda superior de acento ocre editorial -->
+    <div class="h-1.5 bg-acento-ocre w-full"></div>
+
+    <!-- Encabezado Institucional -->
+    <header class="border-b border-borde-gris bg-white/30 py-6">
+      <div class="max-w-7xl mx-auto px-6 flex justify-between items-baseline">
+        <div class="flex flex-col">
+          <a href="/docentes" class="text-text-marino hover:text-acento-borgoña transition-colors duration-150 no-underline">
+            <span class="font-section text-xs uppercase tracking-widest font-semibold text-acento-ocre">Directorio Académico</span>
+            <span class="block font-display text-2xl font-bold tracking-tight mt-0.5">EduVitae</span>
+          </a>
+        </div>
+        <nav class="font-section text-xs uppercase tracking-wider font-semibold text-text-marino/75 space-x-6">
+          <a href="/docentes" class="hover:text-acento-borgoña transition-colors border-b border-transparent hover:border-acento-borgoña pb-1">Docentes</a>
+          {slug && (
+            <span class="text-acento-ocre">/ Perfil</span>
+          )}
+        </nav>
+      </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-6 py-12">
+      <slot />
+    </main>
+
+    <!-- Pie de Página -->
+    <footer class="border-t border-borde-gris bg-bg-piedra py-8 mt-auto">
+      <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs tracking-wider text-text-marino/60 space-y-4 md:space-y-0">
+        <div class="font-sans">
+          <span>&copy; {new Date().getFullYear()} EduVitae. Universidad de Colima.</span>
+        </div>
+        <div class="font-mono text-[10px] uppercase">
+          <span>Información de registro público para fines académicos</span>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
