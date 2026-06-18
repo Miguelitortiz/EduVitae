@@ -1,0 +1,148 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Public+Sans:ital,wght@0,100..900;1,100..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  /* Paleta de colores exclusivos */
+  --color-bg-papel: #F9F8F6;
+  --color-bg-piedra: #EEEDEB;
+  --color-text-marino: #13294B;
+  --color-acento-verde: #527630;
+  --color-borde-gris: #D1D5DB;
+
+  /* Tipografías institucionales y editoriales */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-section: "Source Serif 4", Georgia, serif;
+  --font-sans: "Public Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+/* Reset y estilos base */
+@layer base {
+  body {
+    background-color: var(--color-bg-papel);
+    color: var(--color-text-marino);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.65;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--color-text-marino);
+  }
+}
+
+/* Utilidades de Diseño Editorial Académico */
+
+/* Borde doble clásico para resaltar encabezados o tarjetas */
+.border-double-academic {
+  border: 4px double var(--color-borde-gris);
+}
+
+/* Marco de foto con espaciador blanco físico */
+.photo-frame {
+  padding: 5px;
+  background-color: white;
+  border: 1px solid var(--color-borde-gris);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02);
+}
+
+/* Enlaces académicos formales con subrayado discontinuo */
+.link-academic {
+  color: var(--color-acento-verde);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+  transition: border-bottom-color 0.15s ease, color 0.15s ease;
+}
+
+.link-academic:hover {
+  border-bottom-color: var(--color-acento-verde);
+}
+
+/* Lista con viñeta cuadrada verde */
+.list-square {
+  list-style: none;
+  padding-left: 0;
+}
+
+.list-square li {
+  position: relative;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.list-square li::before {
+  content: "■";
+  position: absolute;
+  left: 0;
+  color: var(--color-acento-verde);
+  font-size: 0.65rem;
+  top: 0.25rem;
+}
+
+/* Separador formal con banda decorativa de 1px y 3px */
+.academic-divider-double {
+  display: block;
+  border: none;
+  height: 4px;
+  border-top: 1px solid var(--color-borde-gris);
+  border-bottom: 2px solid var(--color-borde-gris);
+  margin: 1.5rem 0;
+}
+
+.academic-divider {
+  height: 1px;
+  background-color: var(--color-borde-gris);
+  border: none;
+  margin: 1.5rem 0;
+}
+
+/* Badges de impacto sin fondo */
+.badge-impact {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--color-acento-verde);
+  display: inline-flex;
+  align-items: center;
+}
+
+.badge-impact::before {
+  content: "† ";
+  margin-right: 0.25rem;
+}
+
+.badge-impact-section::before {
+  content: "§ ";
+  margin-right: 0.25rem;
+}
+
+/* Letra Capitular elegante para citas o secciones destacadas */
+.drop-cap::first-letter {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  float: left;
+  line-height: 0.8;
+  padding-right: 8px;
+  padding-top: 4px;
+  color: var(--color-acento-verde);
+  font-weight: bold;
+}
+
+/* Scrollbar elegante para modales y cuadros de texto */
+.scrollbar-academic::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-academic::-webkit-scrollbar-track {
+  background: var(--color-bg-piedra);
+}
+.scrollbar-academic::-webkit-scrollbar-thumb {
+  background: var(--color-acento-verde);
+}
+.scrollbar-academic::-webkit-scrollbar-thumb:hover {
+  background: var(--color-acento-verde);
+}

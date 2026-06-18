@@ -1,0 +1,155 @@
+{
+  "slug": "fermin-ruben",
+  "fullName": "Fermín Marcelo Rubén Maciel Barboza",
+  "photoUrl": "/images/profesores/fermin-ruben.jpg",
+  "title": "Profesor Investigador de Tiempo Completo",
+  "department": "Facultad de Ingeniería Mecánica y Eléctrica",
+  "institutionalEmail": "fermin_maciel@ucol.mx",
+  "admissionYear": 2017,
+  "academicFormation": {
+    "doctorados": [
+      {
+        "degree": "Doctor en Comunicación",
+        "institution": "Centro de Investigación Científica y de Educación",
+        "year": 2016
+      }
+    ],
+    "maestrias": [],
+    "licenciatura": null
+  },
+  "scientificProduction": {
+    "articles": [
+      {
+        "title": "Desarrollo de un prototipo de geolocalización y procesamiento estadístico en tiempo real para la detección de impactos y volcaduras en automóviles",
+        "journal": "Difu100cia",
+        "year": 2025,
+        "impactFactor": null,
+        "doi": "http://difu100cia.uaz.edu.mx/index.php/difuciencia"
+      },
+      {
+        "title": "A novel metric to estimate energy consumption in LoRaWAN based on SF adjustments",
+        "journal": "Telecommunication Systems (springer Nature)",
+        "year": 2025,
+        "impactFactor": 2.3,
+        "doi": "https://doi.org/10.1007/s11235-025-01296-w"
+      }
+    ],
+    "books": [
+      {
+        "title": "Aplicaciones Inteligentes en la Ingeniería del Futuro",
+        "role": "Coautor",
+        "editorial": "Hambatu Sapiens (HS)",
+        "year": 2025
+      }
+    ]
+  },
+  "educationalMaterials": [
+    {
+      "title": "Juegos de forma estratégica: dominancia, equilibrio de Nash y óptimo de Pa reto",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/688"
+    },
+    {
+      "title": "Introducción a las VLANs en la capa de acceso en redes jerárquicas",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/601"
+    },
+    {
+      "title": "Dilema del prisionero: dominancia, equilibrio y optimalidad",
+      "type": "Recurso digital",
+      "year": 2025,
+      "url": "https://redi.ucol.mx/recurso/689"
+    }
+  ],
+  "teaching": {
+    "courses": [
+      {
+        "name": "Procesamiento Digital de Señales",
+        "level": "Maestría",
+        "students": 5,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Industria 4.0",
+        "level": "Maestría",
+        "students": 5,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Taller de PLC",
+        "level": "Licenciatura",
+        "students": 17,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Introducción a las Redes de",
+        "level": "Licenciatura",
+        "students": 16,
+        "period": "Feb-Jul 2025"
+      },
+      {
+        "name": "Fundamentos de Conmutación",
+        "level": "Licenciatura",
+        "students": 16,
+        "period": "Ago-Ene 2025"
+      },
+      {
+        "name": "Teoría de Juegos",
+        "level": "Licenciatura",
+        "students": 19,
+        "period": "Ago-Ene 2025"
+      },
+      {
+        "name": "Controladores Lógicos",
+        "level": "Licenciatura",
+        "students": 8,
+        "period": "Ago-Ene 2025"
+      }
+    ],
+    "theses": [
+      {
+        "student": "Sergio Daniel Rodríguez Suarez",
+        "title": "Desarrollo de un nodo de rastreo y monitoreo para fines tácticos",
+        "year": 2025,
+        "role": "Coasesor"
+      },
+      {
+        "student": "Carlos Hugo Carrillo Cardona,",
+        "title": "Algoritmos evolutivos y bioinspirados para la asignación inteligente de puntos de acceso en un entorno multiusuario",
+        "year": 2025,
+        "role": "Asesor"
+      },
+      {
+        "student": "Brandon Aarón Amezcua García",
+        "title": "Detección de drones mediante aprendizaje automático",
+        "year": 2025,
+        "role": "Asesor"
+      },
+      {
+        "student": "Rubén Alonso Ramírez Plascencia",
+        "title": "Sistema guía para personas invidentes dentro de su hogar",
+        "year": 2025,
+        "role": "Asesor"
+      },
+      {
+        "student": "Yafte Ordaz Carreño",
+        "title": "Implementación de Sistemas de Comunicación y Redes para el sector minero",
+        "year": 2025,
+        "role": "Asesor"
+      }
+    ]
+  },
+  "certifications": [
+    {
+      "title": "Diplomado Agentes TIC: Prospectiva de la IA para el trabajo digital",
+      "institution": "Universidad de Colima",
+      "year": 2025
+    }
+  ],
+  "academicBody": {
+    "name": "FIME",
+    "level": "CAEC"
+  }
+}
