@@ -1,176 +1,103 @@
-# EduVitae - Claustro Académico e Investigadores
+# EduVitae - Portal Académico e Extractor Curricular
 
-EduVitae es una aplicación web estática para mostrar perfiles académicos formales de profesores investigadores. Está construida sobre el framework **Astro** y estilizada mediante **Tailwind CSS (v4)** siguiendo un diseño editorial académico sobrio (inspirado en revistas científicas y anuarios de prestigio).
+EduVitae se ha reorganizado en una arquitectura de múltiples subproyectos para separar la visualización pública de la administración y extracción de datos. Este repositorio ahora se compone de dos aplicaciones principales construidas con **Astro** y estilizadas con **Tailwind CSS (v4)** usando una paleta de colores unificada basada en verde académico (`#527630`):
 
----
-
-## 1. Requisitos Previos
-
-Asegúrate de contar con:
-- **Node.js** v18 o superior.
-- **npm** (gestor de paquetes de Node).
+1. **`App` (Vitrina Pública)**: Portal web estático y optimizado para mostrar los perfiles académicos de profesores investigadores.
+2. **`CV-UI` (Herramienta Administrativa)**: Interfaz local que permite subir currículums oficiales en formato PDF (Universidad de Colima), extraer su información mediante scripts de Python, editar los datos en un formulario amigable y exportar el perfil resultante directamente a la vitrina pública.
 
 ---
 
-## 2. Instrucciones de Uso y Comandos
+## 📁 Estructura del Repositorio
 
-### Instalar dependencias
-Para instalar todas las dependencias necesarias de Astro y Tailwind CSS, ejecuta en la raíz del proyecto:
-```bash
-npm install
+```
+EduVitae/
+├── App/                     # Sitio web público del claustro docente
+│   ├── src/
+│   │   ├── content/
+│   │   │   └── profesores/  # Archivos JSON con los perfiles de los docentes
+│   │   ├── components/      # Componentes visuales (IdentityCard, PublicationList, etc.)
+│   │   └── ...
+│   ├── package.json         # Ejecuta en puerto 6767
+│   └── ...
+├── CV-UI/                   # Interfaz de extracción y edición
+│   ├── cv_extractor/        # Carpeta con scripts de Python y almacenamiento temporal
+│   │   ├── cv_scraper.py    # Extractor de datos de PDF a JSON
+│   │   ├── format_cv.py     # Adaptador de JSON para exportar a App
+│   │   └── ...
+│   ├── src/
+│   │   ├── pages/
+│   │   │   └── index.astro  # Editor visual y cargador de PDF
+│   │   └── ...
+│   ├── server.js            # Servidor backend de Node.js (Express, puerto 6769)
+│   ├── package.json         # Ejecuta en puerto 6768
+│   └── ...
+└── README.md                # Esta guía general
 ```
 
-### Ejecutar en entorno de desarrollo
-Inicia el servidor local de desarrollo con recarga en tiempo real:
+---
+
+## ⚙️ Requisitos Previos
+
+- **Node.js** v22 o superior.
+- **Python 3** con las librerías necesarias para la extracción (entorno virtual `venv`).
+- **npm** para la gestión de paquetes de Node.
+
+---
+
+## 🚀 Guía de Inicio Rápido
+
+Las aplicaciones corren en puertos distintos para poder ejecutarlas en paralelo sin conflictos:
+
+### 1. Servidor de la Vitrina Pública (`App`)
+Para iniciar el portal de consulta pública:
 ```bash
+cd App
+npm install
 npm run dev
 ```
-El sitio estará disponible en: `http://localhost:4321/`
+La aplicación estará disponible en: **`http://localhost:6767/`**
 
-### Compilar para producción
-Genera el sitio web completamente estático optimizado en la carpeta `dist/`:
+Para generar la compilación estática de producción (`dist/`):
 ```bash
 npm run build
 ```
-*(Nota: Para verificar localmente la compilación de producción, puedes ejecutar `npm run preview` después de hacer el build).*
 
 ---
 
-## 3. Arquitectura y Estructura de Archivos
+### 2. Panel Administrativo (`CV-UI`)
+Esta aplicación requiere ejecutar tanto el frontend (puerto `6768`) como un backend en Node (Express en puerto `6769`) para interactuar con los scripts de Python.
 
+#### Ejecución Estándar:
+```bash
+cd CV-UI
+npm install
+npm run dev
 ```
-src/
-├── content/
-│   └── profesores/
-│       ├── walter-mata.json       # Datos curados del Dr. Walter Mata
-│       └── sofia-ramirez.json     # Datos de prueba (coherentes)
-├── layouts/
-│   └── InstitutionalLayout.astro  # Layout HTML5, SEO y envoltorio institucional
-├── components/
-│   ├── IdentityCard.astro         # Columna izquierda: Foto sepia/B&W y datos personales
-│   ├── PublicationList.astro      # Central: Lista de artículos (impacto) y libros
-│   ├── TeachingList.astro         # Central: Cursos impartidos (tablas) y tesis
-│   ├── ImpactSidebar.astro        # Columna derecha: Indicadores numéricos de impacto
-│   └── TeacherGrid.astro          # Rejilla del listado general en /docentes
-├── lib/
-│   └── cargarProfesores.js        # Utilidad de carga de datos JSON en tiempo de build
-└── styles/
-    └── global.css                 # Reset CSS, fuentes de Google y configuración Tailwind v4
+La aplicación estará disponible en: **`http://localhost:6768/`**
+
+#### Ejecución mediante Distrobox (Recomendado en Fedora Kinoite):
+Si desarrollas dentro de un contenedor Distrobox llamado `dev-main`, puedes arrancar el servidor directamente con:
+```bash
+distrobox enter dev-main -- npm run dev
 ```
 
 ---
 
-## 4. Guía para Agregar un Nuevo Docente
+## 🐍 Integración de Python y Flujo de Trabajo
 
-Para agregar un perfil docente al directorio, realiza los siguientes dos pasos:
+El backend de `CV-UI` (`server.js`) interactúa de forma directa con los scripts de Python del directorio `cv_extractor`. 
 
-### Paso A: Crear el archivo JSON
-Crea un nuevo archivo con el formato `nombre-del-docente.json` dentro de la carpeta `src/content/profesores/`. El archivo debe seguir estrictamente este esquema estructurado:
+### Entorno Virtual (`venv`)
+Se requiere un entorno virtual de Python instalado en el proyecto para asegurar que las dependencias de extracción de PDF estén disponibles. El backend busca automáticamente el intérprete de Python en las siguientes rutas (por orden de prioridad):
+- `CV-UI/venv/bin/python`
+- `CV-UI/.venv/bin/python`
+- `App/venv/bin/python`
+- `App/.venv/bin/python`
+- `/var/home/Moi/Documents/Projects/EduVitae/App/venv/bin/python`
 
-```json
-{
-  "slug": "nombre-del-docente",
-  "fullName": "Nombre Completo del Docente",
-  "photoUrl": "/images/profesores/nombre-del-docente.jpg",
-  "title": "Puesto Académico (ej: Profesor Investigador de Tiempo Completo)",
-  "department": "Nombre de la Facultad o Departamento",
-  "institutionalEmail": "correo@ucol.mx",
-  "admissionYear": 2005,
-  "quote": "Frase inspiracional o académica del docente",
-  "academicFormation": {
-    "doctorados": [
-      {
-        "degree": "Doctor en...",
-        "institution": "Universidad de...",
-        "year": 2015
-      }
-    ],
-    "maestrias": [
-      {
-        "degree": "Maestría en...",
-        "institution": "Universidad de...",
-        "year": 2008
-      }
-    ],
-    "licenciatura": {
-      "degree": "Licenciatura en...",
-      "institution": "Universidad de...",
-      "year": 2003
-    }
-  },
-  "scientificProduction": {
-    "articles": [
-      {
-        "title": "Título del artículo científico",
-        "journal": "Nombre de la revista",
-        "year": 2024,
-        "impactFactor": 2.5,
-        "doi": "https://doi.org/..."
-      }
-    ],
-    "books": [
-      {
-        "title": "Título del libro publicado",
-        "role": "Coautor o Coordinador",
-        "editorial": "Nombre de la editorial",
-        "year": 2023
-      }
-    ]
-  },
-  "educationalMaterials": [
-    {
-      "title": "Título del recurso didáctico",
-      "type": "Recurso digital o Manual",
-      "year": 2024,
-      "url": "https://..."
-    }
-  ],
-  "teaching": {
-    "courses": [
-      {
-        "name": "Nombre de la materia",
-        "level": "Licenciatura o Maestría",
-        "students": 30,
-        "period": "Ago-Ene 2025"
-      }
-    ],
-    "theses": [
-      {
-        "student": "Nombre del alumno",
-        "title": "Título de la tesis",
-        "year": 2024,
-        "role": "Asesor o Codirector"
-      }
-    ]
-  },
-  "certifications": [
-    {
-      "title": "Certificación Obtenida",
-      "institution": "Institución Certificadora",
-      "year": 2022
-    }
-  ],
-  "academicBody": {
-    "name": "Nombre del Cuerpo Académico",
-    "level": "CAEC / CA en Consolidación / En Formación"
-  }
-}
-```
-
-> **Nota Crítica de Calidad**: Asegúrate de **excluir** todo dato puramente administrativo (como número de empleado, horas específicas de gestión o códigos de evaluación del tipo `I.II.X`).
-
-### Paso B: Agregar la fotografía
-1. Consigue una fotografía formal del docente.
-2. Conviértela a formato **JPG** o **WebP** y colócala en `public/images/profesores/nombre-del-docente.jpg`.
-3. El sistema aplicará de manera automática los filtros de estilo de anuario (escala de grises, contraste aumentado y ligero sepia). Si no se proporciona una imagen o no se encuentra el archivo, la tarjeta mostrará un elegante monograma con las iniciales del docente.
-
----
-
-## 5. Despliegue en Netlify / Vercel
-
-Debido a que EduVitae compila en modo estático puro (`static`), puede ser desplegado de forma gratuita con velocidad de carga extrema:
-
-1. **Vercel / Netlify**: Conecta tu repositorio de Git.
-2. **Comando de construcción**: `npm run build`
-3. **Carpeta de salida**: `dist`
-4. Dado que Astro gestiona las rutas estáticas automáticamente, las páginas `/docentes` y `/docentes/[slug]` funcionarán directamente sin necesidad de configuraciones especiales de redirección del servidor.
+### Flujo de Carga de un Docente:
+1. **Subida y Extracción**: Desde la interfaz de `CV-UI` en el navegador, se sube el PDF del currículum. El backend ejecuta `cv_scraper.py` para parsear el contenido y devolver un JSON estructurado.
+2. **Edición Curricular**: La interfaz muestra los campos extraídos (Grados académicos, artículos, docencia, tesis, etc.) permitiendo corregir errores de escaneo u omisiones.
+3. **Exportación**: Al presionar **Listo (Exportar)**, el backend guarda los datos y ejecuta `format_cv.py`. Este script adapta la estructura final del docente y la escribe directamente como un archivo JSON en:
+   `/var/home/Moi/Documents/Projects/EduVitae/App/src/content/profesores/[nombre-del-docente].json`
+4. **Visualización**: La web de `App` leerá este nuevo JSON automáticamente en la siguiente compilación o recarga en caliente del entorno de desarrollo.
