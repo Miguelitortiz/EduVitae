@@ -1,0 +1,36 @@
+[
+  {
+    "id": 1,
+    "slug": "grupo-a",
+    "name": "Grupo A",
+    "career_id": 101,
+    "academic_period": "Feb-Jul 2025",
+    "shift": "Matutino",
+    "professors": [
+      {
+        "id": 1,
+        "slug": "fermin-ruben",
+        "fullName": "Fermín Marcelo Rubén Maciel Barboza",
+        "email": "fermin_maciel@ucol.mx",
+        "subject_taught": "Procesamiento Digital de Señales"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "slug": "grupo-b",
+    "name": "Grupo B",
+    "career_id": 102,
+    "academic_period": "Feb-Jul 2025",
+    "shift": "Vespertino",
+    "professors": [
+      {
+        "id": 2,
+        "slug": "walter-mata",
+        "fullName": "Walter Alexander Mata López",
+        "email": "wmata@ucol.mx",
+        "subject_taught": "Programación Funcional"
+      }
+    ]
+  }
+]

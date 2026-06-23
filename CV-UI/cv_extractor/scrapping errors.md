@@ -1,8 +1,0 @@
-- Apartados en dos renglones
-- Normalizar apartados completamente en mayusculas al formato Mayusculas y minusculas normal
-- No captura el apartado de área 
-- El nombre del doctorado es de "Tecnología Educativa", pero sigue el renglon, y queda en "Tecnología Educativa En" 
-- No captura correctamente la institución 
-- Escribe "Institución : Institución .....
-- captura mal start y end en diplomados
-- faltan tesis por capturar

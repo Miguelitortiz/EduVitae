@@ -1,0 +1,1538 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Extracción y Edición de CV">
+  <div class="max-w-4xl mx-auto">
+    <!-- Encabezado de la página -->
+    <div class="space-y-2 text-center sm:text-left mb-8">
+      <h1 class="font-display text-4xl font-bold tracking-tight text-text-marino">
+        Extracción y Carga de Perfiles Docentes
+      </h1>
+      <p class="font-sans text-sm text-text-marino/70 max-w-2xl leading-relaxed">
+        Sube el currículum de un profesor en formato PDF (generado por el Sistema Institucional de Curriculum Vitae). El extractor procesará el archivo para autocompletar el perfil, permitiéndote revisarlo, asignarlo a una delegación y sus grupos, y guardarlo en la base de datos de EduVitae.
+      </p>
+    </div>
+
+    <!-- ESTADO 1: DRAG & DROP -->
+    <div id="upload-container" class="bg-white border-2 border-dashed border-borde-gris rounded-sm p-12 text-center hover:border-acento-verde transition-colors duration-200 cursor-pointer">
+      <input type="file" id="pdf-input" accept=".pdf" class="hidden" />
+      <div class="space-y-4">
+        <div class="text-4xl text-acento-verde">📁</div>
+        <div class="space-y-2">
+          <p class="font-section text-lg font-semibold">Arrastra y suelta el PDF aquí</p>
+          <p class="text-xs text-text-marino/60 font-mono">o haz clic para buscar el archivo en tu equipo</p>
+        </div>
+        <p class="text-[10px] text-text-marino/50 font-mono max-w-md mx-auto leading-relaxed">
+          * El PDF debe seguir el formato oficial de la Universidad de Colima (CV2026).
+        </p>
+      </div>
+    </div>
+
+    <!-- ESTADO 2: CARGANDO / PROCESANDO -->
+    <div id="loading-container" class="hidden bg-white border border-borde-gris rounded-sm p-12 text-center space-y-6">
+      <div class="relative w-16 h-16 mx-auto flex items-center justify-center">
+        <!-- Spinner elegante clásico -->
+        <div class="absolute inset-0 border-2 border-borde-gris rounded-full"></div>
+        <div class="absolute inset-0 border-2 border-t-acento-verde rounded-full animate-spin"></div>
+        <span class="font-mono text-[10px] text-acento-verde font-bold">PDF</span>
+      </div>
+      
+      <div class="space-y-2">
+        <h3 class="font-section text-base font-bold text-text-marino">Procesando documento...</h3>
+        <p class="font-mono text-xs text-text-marino/60" id="loading-status">Ejecutando cv_scraper.py en el servidor...</p>
+      </div>
+
+      <div class="w-full bg-bg-piedra h-1.5 max-w-xs mx-auto rounded-full overflow-hidden">
+        <div class="bg-acento-verde h-full animate-[loading-bar_2s_infinite_linear]" style="width: 50%;"></div>
+      </div>
+    </div>
+
+    <!-- ESTADO 3: ERROR -->
+    <div id="error-container" class="hidden bg-white border border-acento-verde/40 border-double-academic rounded-sm p-6 text-center space-y-4">
+      <div class="text-2xl text-acento-verde">⚠️ Error de Extracción</div>
+      <p class="text-xs font-mono text-acento-verde" id="error-message"></p>
+      <button id="btn-error-retry" class="px-4 py-2 border border-acento-verde text-acento-verde text-xs font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">
+        Intentar de nuevo
+      </button>
+    </div>
+
+    <!-- ESTADO 4: EDITOR INTERACTIVO -->
+    <div id="editor-container" class="hidden space-y-6">
+      <!-- Tarjeta de Resumen -->
+      <div class="bg-white border border-borde-gris rounded-sm p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span class="text-[9px] font-mono uppercase text-text-marino/50 tracking-widest block">Docente Detectado</span>
+          <h2 id="editor-summary-name" class="font-display text-2xl font-bold text-text-marino"></h2>
+          <p id="editor-summary-title" class="text-xs text-text-marino/70 font-sans"></p>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button id="btn-cancel" class="flex-1 sm:flex-none px-4 py-2 border border-borde-gris text-text-marino/70 text-xs font-mono rounded-sm hover:bg-bg-piedra transition-all cursor-pointer">
+            Descartar
+          </button>
+          <button id="btn-save" class="flex-1 sm:flex-none px-6 py-2 bg-acento-verde text-white text-xs font-mono rounded-sm hover:bg-opacity-90 transition-all font-bold cursor-pointer">
+            Guardar en BD
+          </button>
+        </div>
+      </div>
+
+      <!-- Pestañas (Tabs) del Editor -->
+      <div class="bg-white border border-borde-gris rounded-sm flex flex-col min-h-[500px]">
+        <!-- Encabezado de Pestañas -->
+        <div class="flex flex-wrap border-b border-borde-gris font-section text-[10px] sm:text-xs uppercase tracking-wider font-bold bg-bg-piedra/30">
+          <button class="editor-tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-acento-verde text-acento-verde cursor-pointer transition-all duration-150" data-tab="personales">
+            Datos Generales
+          </button>
+          <button class="editor-tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150" data-tab="academicos">
+            Estudios y Certs.
+          </button>
+          <button class="editor-tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150" data-tab="produccion">
+            Producción
+          </button>
+          <button class="editor-tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150" data-tab="didactico">
+            Materiales
+          </button>
+          <button class="editor-tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150" data-tab="docencia">
+            Docencia y Tesis
+          </button>
+          <button class="editor-tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150 font-bold" data-tab="grupos">
+            Asignar Grupos y Delegación
+          </button>
+        </div>
+
+        <!-- Contenedor del Panel Activo -->
+        <div class="p-6 flex-grow" id="editor-panel-content">
+          <!-- RENDERIZADO DINÁMICAMENTE POR JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTADO 5: EXPORTACIÓN EXITOSA -->
+    <div id="success-container" class="hidden bg-white border-double-academic p-12 text-center space-y-6">
+      <div class="text-4xl text-green-700">✓</div>
+      <div class="space-y-2">
+        <h2 class="font-display text-3xl font-bold text-text-marino">¡Docente Guardado Correctamente!</h2>
+        <p class="font-sans text-sm text-text-marino/70 max-w-md mx-auto">
+          El perfil ha sido almacenado en la base de datos de **PostgreSQL**. Se compilará en la vitrina estática en el próximo build.
+        </p>
+      </div>
+      
+      <div class="pt-4 flex flex-col sm:flex-row justify-center gap-3">
+        <button id="btn-success-new" class="px-6 py-2.5 bg-acento-verde text-white text-xs font-mono rounded-sm hover:bg-opacity-90 transition-all font-bold cursor-pointer">
+          Procesar Otro PDF
+        </button>
+        <a href="/" target="_blank" rel="noopener noreferrer" class="px-6 py-2.5 border border-borde-gris text-text-marino/70 text-xs font-mono rounded-sm hover:bg-bg-piedra transition-all flex items-center justify-center">
+          Ir a la Vitrina Pública
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Crear Grupo -->
+  <div id="modal-create-group" class="modal-overlay fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+    <div class="bg-white border border-borde-gris rounded-sm max-w-md w-full p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-borde-gris pb-2">
+        <h3 class="font-section text-sm uppercase tracking-wider font-bold text-text-marino">Crear Nuevo Grupo</h3>
+        <button type="button" class="close-modal font-mono font-bold text-lg hover:text-acento-verde cursor-pointer">×</button>
+      </div>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Nombre del Grupo</label>
+          <input id="new-group-name" type="text" placeholder="Ej: Grupo A" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+        </div>
+        
+        <div>
+          <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Período Académico</label>
+          <input id="new-group-period" type="text" placeholder="Ej: Feb-Jul 2025" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+        </div>
+        
+        <div>
+          <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Turno</label>
+          <select id="new-group-shift" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]">
+            <option value="Matutino">Matutino</option>
+            <option value="Vespertino">Vespertino</option>
+            <option value="Nocturno">Nocturno</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-2 border-t border-borde-gris pt-3">
+        <button type="button" id="btn-cancel-create-group" class="px-4 py-2 border border-borde-gris text-text-marino/70 text-xs font-mono rounded-sm hover:bg-bg-piedra transition-all cursor-pointer">
+          Cancelar
+        </button>
+        <button type="button" id="btn-confirm-create-group" class="px-4 py-2 bg-acento-verde text-white text-xs font-mono rounded-sm hover:bg-opacity-90 transition-all font-bold cursor-pointer">
+          Crear Grupo
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  @keyframes loading-bar {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+</style>
+
+<!-- LÓGICA DE CLIENTE (VINCULACIÓN E INTERACTIVIDAD) -->
+<script>
+  let currentCVData = null;
+  let activeTab = 'personales';
+
+  // Datos de Referencia Maestros y Relacionales cargados del backend
+  let referenceDelegations = [];
+  let referenceCareers = [];
+  let referenceFaculties = [];
+  let currentGroups = [];
+  let delegationId = null;
+  let adscriptionFacultyId = null;
+  let groupAssignments = []; // [{ class_group_id, name, subject_taught }]
+
+  // --- COINCIDENCIA DIFUSA DE FACULTADES ---
+  function cleanStringForMatching(str: string): string {
+    if (!str) return '';
+    return str.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Quitar acentos
+      .replace(/[^a-z0-9]/g, ' ')      // Solo caracteres alfanuméricos
+      .replace(/\s+/g, ' ')            // Colapsar espacios
+      .trim();
+  }
+
+  function getLevenshteinDistance(a: string, b: string): number {
+    const tmp = [];
+    for (let i = 0; i <= a.length; i++) {
+      tmp[i] = [i];
+    }
+    for (let j = 0; j <= b.length; j++) {
+      tmp[0][j] = j;
+    }
+    for (let i = 1; i <= a.length; i++) {
+      for (let j = 1; j <= b.length; j++) {
+        tmp[i][j] = Math.min(
+          tmp[i - 1][j] + 1,
+          tmp[i][j - 1] + 1,
+          tmp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+        );
+      }
+    }
+    return tmp[a.length][b.length];
+  }
+
+  function findBestFacultyMatch(scrapedUnit: string, facultiesList: any[]): any {
+    if (!scrapedUnit || facultiesList.length === 0) return null;
+
+    const cleanScraped = cleanStringForMatching(scrapedUnit);
+    if (!cleanScraped) return null;
+
+    // Abreviaciones clave de la Universidad de Colima
+    const abbrevMap: any = {
+      'fime': 'Facultad de Ingeniería Mecánica y Eléctrica',
+      'telematica': 'Facultad de Telemática',
+      'fcac': 'Facultad de Contabilidad y Administración de Colima',
+      'fcat': 'Facultad de Contabilidad y Administración de Tecomán',
+      'fcam': 'Facultad de Contabilidad y Administración de Manzanillo',
+      'fce': 'Facultad de Ciencias de la Educación',
+      'fc': 'Facultad de Ciencias',
+      'fayd': 'Facultad de Arquitectura y Diseño',
+      'fcq': 'Facultad de Ciencias Químicas',
+      'fic': 'Facultad de Ingeniería Civil',
+      'fie': 'Facultad de Ingeniería Electromecánica',
+      'facimar': 'Facultad de Ciencias Marinas',
+      'fmvz': 'Facultad de Medicina Veterinaria y Zootecnia',
+      'iuba': 'Instituto Universitario de Bellas Artes',
+      'fd': 'Facultad de Derecho',
+      'fm': 'Facultad de Medicina',
+      'flc': 'Facultad de Letras y Comunicación',
+      'fcps': 'Facultad de Ciencias Políticas y Sociales',
+      'fe': 'Facultad de Economía',
+      'fle': 'Facultad de Lenguas Extranjeras',
+      'ft': 'Facultad de Turismo',
+      'ftg': 'Facultad de Turismo y Gastronomía',
+      'ef': 'Escuela de Filosofía',
+      'em': 'Escuela de Mercadotecnia'
+    };
+
+    if (abbrevMap[cleanScraped]) {
+      const targetName = abbrevMap[cleanScraped];
+      const match = facultiesList.find(f => f.name === targetName);
+      if (match) return match;
+    }
+
+    const scrapedTokens = cleanScraped.split(' ');
+    for (const token of scrapedTokens) {
+      if (abbrevMap[token]) {
+        const targetName = abbrevMap[token];
+        const match = facultiesList.find(f => f.name === targetName);
+        if (match) return match;
+      }
+    }
+
+    // 2. Coincidencia exacta o subcadena completa (máxima prioridad)
+    let bestMatch = null;
+    let maxScore = -1;
+
+    for (const fac of facultiesList) {
+      const cleanFac = cleanStringForMatching(fac.name);
+
+      if (cleanScraped === cleanFac) {
+        return fac; // Match perfecto
+      }
+
+      if (cleanScraped.includes(cleanFac) || cleanFac.includes(cleanScraped)) {
+        const score = 1000 + Math.min(cleanScraped.length, cleanFac.length);
+        if (score > maxScore) {
+          maxScore = score;
+          bestMatch = fac;
+        }
+      }
+    }
+
+    if (bestMatch) return bestMatch;
+
+    // 3. Puntuación por palabras y Levenshtein
+    const stopWords = new Set(['de', 'y', 'la', 'el', 'en', 'para', 'con', 'del', 'los', 'las', 'un', 'una']);
+    const dptWords = cleanScraped.split(' ').filter(w => w.length > 1 && !stopWords.has(w));
+
+    for (const fac of facultiesList) {
+      const cleanFac = cleanStringForMatching(fac.name);
+      const facWords = cleanFac.split(' ').filter(w => w.length > 1 && !stopWords.has(w));
+
+      let score = 0;
+      for (const sw of dptWords) {
+        let bestWordScore = 0;
+        for (const fw of facWords) {
+          if (sw === fw) {
+            bestWordScore = Math.max(bestWordScore, sw.length * 10);
+          } else if (fw.includes(sw) || sw.includes(fw)) {
+            bestWordScore = Math.max(bestWordScore, Math.min(sw.length, fw.length) * 5);
+          } else if (sw.length >= 4 && fw.length >= 4) {
+            const dist = getLevenshteinDistance(sw, fw);
+            if (dist <= 2) {
+              bestWordScore = Math.max(bestWordScore, (Math.max(sw.length, fw.length) - dist) * 4);
+            }
+          }
+        }
+        score += bestWordScore;
+      }
+
+      if (score > maxScore) {
+        maxScore = score;
+        bestMatch = fac;
+      }
+    }
+
+    if (maxScore > 10) {
+      return bestMatch;
+    }
+
+    return null;
+  }
+
+  // --- REFERENCIAS DOM ---
+  const uploadContainer = document.getElementById('upload-container');
+  const loadingContainer = document.getElementById('loading-container');
+  const errorContainer = document.getElementById('error-container');
+  const editorContainer = document.getElementById('editor-container');
+  const successContainer = document.getElementById('success-container');
+  
+  const pdfInput = document.getElementById('pdf-input');
+  const loadingStatus = document.getElementById('loading-status');
+  const errorMessage = document.getElementById('error-message');
+  
+  const editorSummaryName = document.getElementById('editor-summary-name');
+  const editorSummaryTitle = document.getElementById('editor-summary-title');
+  const editorPanelContent = document.getElementById('editor-panel-content');
+  
+  const btnCancel = document.getElementById('btn-cancel');
+  const btnSave = document.getElementById('btn-save');
+  const btnErrorRetry = document.getElementById('btn-error-retry');
+  const btnSuccessNew = document.getElementById('btn-success-new');
+
+  // Modal Crear Grupo
+  const modalCreateGroup = document.getElementById('modal-create-group');
+  const newGroupName = document.getElementById('new-group-name') as HTMLInputElement;
+  const newGroupPeriod = document.getElementById('new-group-period') as HTMLInputElement;
+  const newGroupShift = document.getElementById('new-group-shift') as HTMLSelectElement;
+  const btnConfirmCreateGroup = document.getElementById('btn-confirm-create-group');
+  const btnCancelCreateGroup = document.getElementById('btn-cancel-create-group');
+
+  // --- BASIC AUTH & FETCH HELPER ---
+  function getAuthHeader() {
+    let saved = localStorage.getItem('eduvitae_auth');
+    if (!saved) {
+      // Default fallback
+      saved = btoa('admin:admin_pass');
+      localStorage.setItem('eduvitae_auth', saved);
+    }
+    return `Basic ${saved}`;
+  }
+
+  async function apiFetch(url: string, options: any = {}) {
+    options.headers = {
+      ...options.headers,
+      'Authorization': getAuthHeader()
+    };
+    let res = await fetch(url, options);
+    if (res.status === 401) {
+      const username = prompt('Ingrese el usuario de administración:');
+      const password = prompt('Ingrese la contraseña de administración:');
+      if (username && password) {
+        const creds = btoa(`${username}:${password}`);
+        localStorage.setItem('eduvitae_auth', creds);
+        options.headers['Authorization'] = `Basic ${creds}`;
+        res = await fetch(url, options);
+      }
+    }
+    return res;
+  }
+
+  // --- CARGAR DATOS DE REFERENCIA ---
+  async function loadReferenceData() {
+    try {
+      const [delRes, carRes, facRes] = await Promise.all([
+        apiFetch('/api/reference/delegations'),
+        apiFetch('/api/reference/careers'),
+        apiFetch('/api/reference/faculties')
+      ]);
+      
+      if (delRes.ok) referenceDelegations = await delRes.json();
+      if (carRes.ok) referenceCareers = await carRes.json();
+      if (facRes.ok) referenceFaculties = await facRes.json();
+    } catch (err) {
+      console.error('Error al cargar datos maestros:', err);
+    }
+  }
+
+  // --- EVENTOS DRAG & DROP ---
+  if (uploadContainer) {
+    uploadContainer.addEventListener('click', () => pdfInput && pdfInput.click());
+    
+    uploadContainer.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadContainer.classList.add('border-acento-verde');
+    });
+    
+    uploadContainer.addEventListener('dragleave', () => {
+      uploadContainer.classList.remove('border-acento-verde');
+    });
+    
+    uploadContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadContainer.classList.remove('border-acento-verde');
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+  }
+
+  if (pdfInput) {
+    pdfInput.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      const files = target.files;
+      if (files && files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+  }
+
+  // --- GESTIÓN DE ARCHIVOS Y EXTRACCIÓN ---
+  async function handleFile(file: File) {
+    if (file.type !== 'application/pdf') {
+      alert('Por favor, selecciona un archivo en formato PDF.');
+      return;
+    }
+
+    showState('loading');
+    if (loadingStatus) loadingStatus.textContent = 'Subiendo PDF al backend...';
+
+    try {
+      // Cargar datos de referencia en paralelo si no se han cargado
+      if (referenceDelegations.length === 0) {
+        await loadReferenceData();
+      }
+
+      const formData = new FormData();
+      formData.append('pdf', file);
+
+      if (loadingStatus) loadingStatus.textContent = 'Analizando PDF con el script extractor (cv_scraper.py)...';
+      
+      const res = await apiFetch('/api/extract', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json();
+        throw new Error(errJson.error || 'Ocurrió un error al procesar el PDF.');
+      }
+
+      currentCVData = await res.json();
+      
+      // Inicializar adscripción y asignaciones de grupo
+      delegationId = referenceDelegations[0]?.id || null;
+      adscriptionFacultyId = null;
+      groupAssignments = [];
+      
+      const dpt = currentCVData.professorData?.laborData?.academicUnit;
+      if (dpt && referenceFaculties.length > 0) {
+        const bestMatch = findBestFacultyMatch(dpt, referenceFaculties);
+        if (bestMatch) {
+          adscriptionFacultyId = bestMatch.id;
+          delegationId = bestMatch.delegation_id;
+          if (!currentCVData.professorData.laborData) {
+            currentCVData.professorData.laborData = {};
+          }
+          currentCVData.professorData.laborData.academicUnit = bestMatch.name;
+        }
+      }
+
+      // Mostrar resumen superior
+      if (editorSummaryName) editorSummaryName.textContent = currentCVData.professorData.fullName || 'Nombre No Detectado';
+      if (editorSummaryTitle) {
+        editorSummaryTitle.textContent = `${currentCVData.professorData.laborData.currentAppointment || 'Docente'} — ${currentCVData.professorData.laborData.academicUnit || 'Facultad'}`;
+      }
+      
+      activeTab = 'personales';
+      updateTabButtons();
+      renderActiveTab();
+      showState('editor');
+    } catch (err: any) {
+      console.error(err);
+      if (errorMessage) errorMessage.textContent = err.message || 'Error al procesar el archivo.';
+      showState('error');
+    }
+  }
+
+  // --- BOTÓN CONFIRMAR Y GUARDAR EN BD ---
+  if (btnSave) {
+    btnSave.addEventListener('click', async () => {
+      if (!currentCVData) return;
+
+      showState('loading');
+      if (loadingStatus) loadingStatus.textContent = 'Enviando perfil y guardando relaciones en PostgreSQL...';
+
+      try {
+        const payload = {
+          professorData: currentCVData,
+          delegation_id: delegationId ? parseInt(String(delegationId), 10) : null,
+          faculty_id: adscriptionFacultyId ? parseInt(String(adscriptionFacultyId), 10) : null,
+          group_assignments: groupAssignments.map(a => ({
+            class_group_id: a.class_group_id,
+            subject_taught: a.subject_taught
+          }))
+        };
+
+        const res = await apiFetch('/api/professors', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errJson = await res.json();
+          throw new Error(errJson.error || 'Ocurrió un error al guardar el docente.');
+        }
+
+        showState('success');
+      } catch (err: any) {
+        console.error(err);
+        alert(`Error al guardar: ${err.message}`);
+        showState('editor');
+      }
+    });
+  }
+
+  // --- NAVEGACIÓN Y EVENTOS GENERALES ---
+  if (btnCancel) {
+    btnCancel.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de que deseas descartar este currículum?')) {
+        currentCVData = null;
+        if (pdfInput) pdfInput.value = '';
+        showState('upload');
+      }
+    });
+  }
+
+  if (btnErrorRetry) {
+    btnErrorRetry.addEventListener('click', () => {
+      currentCVData = null;
+      if (pdfInput) pdfInput.value = '';
+      showState('upload');
+    });
+  }
+
+  if (btnSuccessNew) {
+    btnSuccessNew.addEventListener('click', () => {
+      currentCVData = null;
+      if (pdfInput) pdfInput.value = '';
+      showState('upload');
+    });
+  }
+
+  // Controladores de pestañas
+  document.querySelectorAll('.editor-tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab');
+      if (tab) {
+        activeTab = tab;
+        updateTabButtons();
+        renderActiveTab();
+      }
+    });
+  });
+
+  function updateTabButtons() {
+    document.querySelectorAll('.editor-tab-btn').forEach((btn) => {
+      const tab = btn.getAttribute('data-tab');
+      if (tab === activeTab) {
+        btn.classList.add('text-acento-verde', 'border-b-acento-verde');
+        btn.classList.remove('border-transparent', 'text-text-marino/70');
+      } else {
+        btn.classList.remove('text-acento-verde', 'border-b-acento-verde');
+        btn.classList.add('border-transparent', 'text-text-marino/70');
+      }
+    });
+  }
+
+  function showState(state: 'upload' | 'loading' | 'error' | 'editor' | 'success') {
+    uploadContainer?.classList.toggle('hidden', state !== 'upload');
+    loadingContainer?.classList.toggle('hidden', state !== 'loading');
+    errorContainer?.classList.toggle('hidden', state !== 'error');
+    editorContainer?.classList.toggle('hidden', state !== 'editor');
+    successContainer?.classList.toggle('hidden', state !== 'success');
+  }
+
+  // --- CONTROL MODAL GRUPOS ---
+  function openCreateGroupModal() {
+    const selectCareer = document.getElementById('select-group-career') as HTMLSelectElement;
+    const selectedCareerId = selectCareer ? selectCareer.value : '';
+    if (!selectedCareerId) {
+      alert('Por favor, selecciona una carrera en el tab "Grupos y Delegación" primero.');
+      return;
+    }
+    
+    if (newGroupName) newGroupName.value = '';
+    if (newGroupPeriod) newGroupPeriod.value = '';
+    
+    modalCreateGroup?.classList.remove('hidden');
+    modalCreateGroup?.classList.add('flex');
+  }
+
+  function closeCreateGroupModal() {
+    modalCreateGroup?.classList.add('hidden');
+    modalCreateGroup?.classList.remove('flex');
+  }
+
+  if (btnCancelCreateGroup) {
+    btnCancelCreateGroup.addEventListener('click', closeCreateGroupModal);
+  }
+  document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', closeCreateGroupModal);
+  });
+
+  if (btnConfirmCreateGroup) {
+    btnConfirmCreateGroup.addEventListener('click', async () => {
+      const nameVal = newGroupName.value.trim();
+      const periodVal = newGroupPeriod.value.trim();
+      const shiftVal = newGroupShift.value;
+      const selectCareer = document.getElementById('select-group-career') as HTMLSelectElement;
+      const careerId = selectCareer ? parseInt(selectCareer.value, 10) : null;
+
+      if (!nameVal || !careerId) {
+        alert('El nombre del grupo y la carrera son obligatorios.');
+        return;
+      }
+
+      try {
+        const response = await apiFetch('/api/groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: nameVal,
+            career_id: careerId,
+            academic_period: periodVal,
+            shift: shiftVal
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Error al guardar el grupo');
+        }
+
+        const newGroup = await response.json();
+        closeCreateGroupModal();
+        
+        // Recargar grupos
+        await loadGroupsForCareer(careerId);
+        
+        // Seleccionar grupo nuevo
+        const selectGrp = document.getElementById('select-group') as HTMLSelectElement;
+        if (selectGrp) {
+          selectGrp.value = String(newGroup.id);
+        }
+      } catch (err: any) {
+        alert('Error al crear el grupo: ' + err.message);
+      }
+    });
+  }
+
+  // --- FILTRADO Y GESTIÓN DE GRUPOS ---
+  async function loadGroupsForCareer(careerId: number) {
+    try {
+      const res = await apiFetch(`/api/groups?career_id=${careerId}`);
+      if (res.ok) {
+        currentGroups = await res.json();
+        const selectGrp = document.getElementById('select-group') as HTMLSelectElement;
+        if (selectGrp) {
+          selectGrp.innerHTML = '<option value="">Seleccione un grupo...</option>';
+          currentGroups.forEach((g: any) => {
+            const opt = document.createElement('option');
+            opt.value = String(g.id);
+            opt.textContent = `${g.name} (${g.academic_period} - ${g.shift})`;
+            selectGrp.appendChild(opt);
+          });
+          selectGrp.disabled = false;
+        }
+      }
+    } catch (err) {
+      console.error('Error al consultar grupos:', err);
+    }
+  }
+
+  // --- RENDERIZACIÓN TABS EDITOR ---
+  function renderActiveTab() {
+    if (!editorPanelContent || !currentCVData) return;
+
+    let html = '';
+
+    if (activeTab === 'personales') {
+      const p = currentCVData.professorData;
+      
+      let academicUnitOptions = '<option value="">Otra / No especificada</option>';
+      const currentUnit = p.laborData?.academicUnit || '';
+      
+      referenceFaculties.forEach((f: any) => {
+        const selected = (currentUnit === f.name) ? 'selected' : '';
+        academicUnitOptions += `<option value="${f.name}" ${selected}>${f.name}</option>`;
+      });
+
+      html = `
+        <div class="space-y-6 max-h-[600px] overflow-y-auto scrollbar-academic pr-2">
+          <!-- Bloque Datos Personales -->
+          <div>
+            <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center">
+              <span class="text-acento-verde mr-2">§</span> Datos Personales de Contacto
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Nombre Completo</label>
+                <input type="text" value="${p.fullName || ''}" oninput="window.updateField('professorData.fullName', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Idioma Materno</label>
+                <input type="text" value="${p.contactInfo?.nativeLanguage || ''}" oninput="window.updateField('professorData.contactInfo.nativeLanguage', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Correo Institucional</label>
+                <input type="email" value="${p.contactInfo?.institutionalEmail || ''}" oninput="window.updateField('professorData.contactInfo.institutionalEmail', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Correo Adicional (Opcional)</label>
+                <input type="email" value="${p.contactInfo?.additionalEmail || ''}" oninput="window.updateField('professorData.contactInfo.additionalEmail', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Teléfono</label>
+                <input type="text" value="${p.contactInfo?.phone || ''}" oninput="window.updateField('professorData.contactInfo.phone', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Domicilio Particular (Privado)</label>
+                <input type="text" value="${p.contactInfo?.homeAddress || ''}" oninput="window.updateField('professorData.contactInfo.homeAddress', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <hr class="academic-divider" />
+
+          <!-- Bloque Datos Laborales -->
+          <div>
+            <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center">
+              <span class="text-acento-verde mr-2">§</span> Información Académica y Adscripción
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Nombramiento Actual</label>
+                <input type="text" value="${p.laborData?.currentAppointment || ''}" oninput="window.updateField('professorData.laborData.currentAppointment', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Unidad Académica / DES</label>
+                <select onchange="window.updateField('professorData.laborData.academicUnit', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]">
+                  ${academicUnitOptions}
+                </select>
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Fecha de Ingreso a la Institución</label>
+                <input type="date" value="${p.laborData?.admissionDate || ''}" oninput="window.updateField('professorData.laborData.admissionDate', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Número de Empleado (Oculto en web)</label>
+                <input type="number" value="${p.laborData?.employeeNumber || ''}" oninput="window.updateField('professorData.laborData.employeeNumber', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Dirección de Trabajo</label>
+                <input type="text" value="${p.laborData?.workAddress || ''}" oninput="window.updateField('professorData.laborData.workAddress', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+            </div>
+          </div>
+
+          <hr class="academic-divider" />
+
+          <!-- Bloque Cuerpo Académico -->
+          <div>
+            <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center">
+              <span class="text-acento-verde mr-2">§</span> Cuerpo Académico (CA)
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Código del Cuerpo Académico</label>
+                <input type="text" value="${p.laborData?.academicBody?.code || ''}" oninput="window.updateField('professorData.laborData.academicBody.code', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" placeholder="Ej: UCOL-CA-91" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Nombre del CA</label>
+                <input type="text" value="${p.laborData?.academicBody?.name || ''}" oninput="window.updateField('professorData.laborData.academicBody.name', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Grado de Consolidación</label>
+                <select onchange="window.updateField('professorData.laborData.academicBody.consolidationLevel', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]">
+                  <option value="CAEC" ${p.laborData?.academicBody?.consolidationLevel === 'CAEC' ? 'selected' : ''}>En Consolidación (CAEC)</option>
+                  <option value="CA-Consolidado" ${p.laborData?.academicBody?.consolidationLevel === 'CA-Consolidado' ? 'selected' : ''}>Consolidado (CA)</option>
+                  <option value="CA-En-Formación" ${p.laborData?.academicBody?.consolidationLevel === 'CA-En-Formación' ? 'selected' : ''}>En Formación</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      editorPanelContent.innerHTML = html;
+    } 
+    
+    else if (activeTab === 'academicos') {
+      const form = currentCVData.academicFormation;
+      
+      let degreesHtml = '';
+      if (form.degrees && form.degrees.length > 0) {
+        form.degrees.forEach((deg: any, idx: number) => {
+          degreesHtml += `
+            <div class="p-4 border border-borde-gris/60 rounded-sm bg-bg-piedra/10 mb-4 relative">
+              <button onclick="window.removeArrayItem('academicFormation.degrees', ${idx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-xs cursor-pointer">✕ Eliminar</button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Nivel de Estudio</label>
+                  <select onchange="window.updateField('academicFormation.degrees.${idx}.level', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]">
+                    <option value="Licenciatura" ${deg.level === 'Licenciatura' ? 'selected' : ''}>Licenciatura</option>
+                    <option value="Maestría" ${deg.level === 'Maestría' ? 'selected' : ''}>Maestría</option>
+                    <option value="Doctorado" ${deg.level === 'Doctorado' ? 'selected' : ''}>Doctorado</option>
+                    <option value="Posdoctorado" ${deg.level === 'Posdoctorado' ? 'selected' : ''}>Posdoctorado</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Título Obtenido</label>
+                  <input type="text" value="${deg.title || ''}" oninput="window.updateField('academicFormation.degrees.${idx}.title', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Institución Otorgante</label>
+                  <input type="text" value="${deg.institution || ''}" oninput="window.updateField('academicFormation.degrees.${idx}.institution', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Cédula Profesional</label>
+                  <input type="text" value="${deg.professionalId || ''}" oninput="window.updateField('academicFormation.degrees.${idx}.professionalId', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Año Inicio</label>
+                  <input type="number" value="${deg.startDate || ''}" oninput="window.updateField('academicFormation.degrees.${idx}.startDate', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Año Término</label>
+                  <input type="number" value="${deg.endDate || ''}" oninput="window.updateField('academicFormation.degrees.${idx}.endDate', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Fecha Obtención / Estatus</label>
+                  <input type="text" value="${deg.graduationDate || ''}" oninput="window.updateField('academicFormation.degrees.${idx}.graduationDate', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" placeholder="YYYY-MM-DD o 'grado' si está en trámite" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        degreesHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se detectaron grados académicos.</p>';
+      }
+
+      let certsHtml = '';
+      if (form.certifications && form.certifications.length > 0) {
+        form.certifications.forEach((cert: any, idx: number) => {
+          certsHtml += `
+            <div class="p-3 border border-borde-gris/60 rounded-sm bg-white mb-3 relative">
+              <button onclick="window.removeArrayItem('academicFormation.certifications', ${idx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-[10px] cursor-pointer">✕</button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Título de Certificación / Diplomado</label>
+                  <input type="text" value="${cert.title || ''}" oninput="window.updateField('academicFormation.certifications.${idx}.title', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Año</label>
+                  <input type="number" value="${cert.year || ''}" oninput="window.updateField('academicFormation.certifications.${idx}.year', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Institución</label>
+                  <input type="text" value="${cert.institution || ''}" oninput="window.updateField('academicFormation.certifications.${idx}.institution', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Horas</label>
+                  <input type="number" value="${cert.hours || ''}" oninput="window.updateField('academicFormation.certifications.${idx}.hours', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        certsHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se detectaron certificaciones.</p>';
+      }
+
+      html = `
+        <div class="space-y-6 max-h-[600px] overflow-y-auto scrollbar-academic pr-2">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Estudios Realizados (Grados Académicos)
+              </h4>
+              <button onclick="window.addArrayItem('academicFormation.degrees')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Grado</button>
+            </div>
+            ${degreesHtml}
+          </div>
+          <hr class="academic-divider" />
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Diplomados y Certificaciones
+              </h4>
+              <button onclick="window.addArrayItem('academicFormation.certifications')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Certificación</button>
+            </div>
+            ${certsHtml}
+          </div>
+        </div>
+      `;
+      editorPanelContent.innerHTML = html;
+    } 
+    
+    else if (activeTab === 'produccion') {
+      const prod = currentCVData.scientificProduction || [];
+      const articles = prod.filter((p: any) => p.type === 'Artículo Científico');
+      const books = prod.filter((p: any) => p.type === 'Libro');
+
+      let articlesHtml = '';
+      if (articles.length > 0) {
+        articles.forEach((art: any) => {
+          const globalIdx = prod.indexOf(art);
+          articlesHtml += `
+            <div class="p-3 border border-borde-gris/60 rounded-sm bg-white mb-3 relative">
+              <button onclick="window.removeArrayItem('scientificProduction', ${globalIdx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-[10px] cursor-pointer">✕</button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-3">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Título del Artículo</label>
+                  <input type="text" value="${art.title || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.title', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Revista</label>
+                  <input type="text" value="${art.journalName || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.journalName', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Año</label>
+                  <input type="number" value="${art.year || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.year', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Factor de Impacto</label>
+                  <input type="text" value="${art.impactFactor || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.impactFactor', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">DOI / URL</label>
+                  <input type="text" value="${art.doiOrUrl || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.doiOrUrl', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        articlesHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se detectaron artículos científicos.</p>';
+      }
+
+      let booksHtml = '';
+      if (books.length > 0) {
+        books.forEach((book: any) => {
+          const globalIdx = prod.indexOf(book);
+          booksHtml += `
+            <div class="p-3 border border-borde-gris/60 rounded-sm bg-white mb-3 relative">
+              <button onclick="window.removeArrayItem('scientificProduction', ${globalIdx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-[10px] cursor-pointer">✕</button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-3">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Título del Libro</label>
+                  <input type="text" value="${book.title || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.title', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Rol</label>
+                  <input type="text" value="${book.role || 'Coautor'}" oninput="window.updateField('scientificProduction.${globalIdx}.role', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" placeholder="Coautor o Coordinador" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Editorial</label>
+                  <input type="text" value="${book.editorial || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.editorial', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Año</label>
+                  <input type="number" value="${book.year || ''}" oninput="window.updateField('scientificProduction.${globalIdx}.year', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        booksHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se detectaron libros.</p>';
+      }
+
+      html = `
+        <div class="space-y-6 max-h-[600px] overflow-y-auto scrollbar-academic pr-2">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Artículos Científicos
+              </h4>
+              <button onclick="window.addArrayItem('scientificProduction', 'Artículo Científico')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Artículo</button>
+            </div>
+            ${articlesHtml}
+          </div>
+          <hr class="academic-divider" />
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Libros Publicados
+              </h4>
+              <button onclick="window.addArrayItem('scientificProduction', 'Libro')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Libro</button>
+            </div>
+            ${booksHtml}
+          </div>
+        </div>
+      `;
+      editorPanelContent.innerHTML = html;
+    } 
+    
+    else if (activeTab === 'didactico') {
+      const mats = currentCVData.educationalMaterials || [];
+      let matsHtml = '';
+      if (mats.length > 0) {
+        mats.forEach((mat: any, idx: number) => {
+          matsHtml += `
+            <div class="p-3 border border-borde-gris/60 rounded-sm bg-white mb-3 relative">
+              <button onclick="window.removeArrayItem('educationalMaterials', ${idx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-[10px] cursor-pointer">✕</button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-3">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Título del Recurso</label>
+                  <input type="text" value="${mat.title || ''}" oninput="window.updateField('educationalMaterials.${idx}.title', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Tipo de Material</label>
+                  <input type="text" value="${mat.resourceType || mat.type || ''}" oninput="window.updateField('educationalMaterials.${idx}.resourceType', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" placeholder="Recurso digital / Manual / etc." />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Año</label>
+                  <input type="number" value="${mat.year || ''}" oninput="window.updateField('educationalMaterials.${idx}.year', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">URL de Acceso</label>
+                  <input type="text" value="${mat.accessUrl || mat.url || ''}" oninput="window.updateField('educationalMaterials.${idx}.accessUrl', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        matsHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se detectaron materiales didácticos.</p>';
+      }
+
+      html = `
+        <div class="space-y-6 max-h-[600px] overflow-y-auto scrollbar-academic pr-2">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Recursos y Materiales Didácticos
+              </h4>
+              <button onclick="window.addArrayItem('educationalMaterials')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Material</button>
+            </div>
+            ${matsHtml}
+          </div>
+        </div>
+      `;
+      editorPanelContent.innerHTML = html;
+    } 
+    
+    else if (activeTab === 'docencia') {
+      const hr = currentCVData.humanResources || { teaching: [], theses: [] };
+      
+      let coursesHtml = '';
+      if (hr.teaching && hr.teaching.length > 0) {
+        hr.teaching.forEach((course: any, idx: number) => {
+          coursesHtml += `
+            <div class="p-3 border border-borde-gris/60 rounded-sm bg-white mb-3 relative">
+              <button onclick="window.removeArrayItem('humanResources.teaching', ${idx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-[10px] cursor-pointer">✕</button>
+              <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Nombre de la Materia</label>
+                  <input type="text" value="${course.courseName || ''}" oninput="window.updateField('humanResources.teaching.${idx}.courseName', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Período / Año</label>
+                  <input type="text" value="${course.period || ''}" oninput="window.updateField('humanResources.teaching.${idx}.period', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" placeholder="Ago-Ene 2025" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Alumnos</label>
+                  <input type="number" value="${course.students || 20}" oninput="window.updateField('humanResources.teaching.${idx}.students', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        coursesHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se registraron cursos dictados.</p>';
+      }
+
+      let thesesHtml = '';
+      if (hr.theses && hr.theses.length > 0) {
+        hr.theses.forEach((thesis: any, idx: number) => {
+          thesesHtml += `
+            <div class="p-3 border border-borde-gris/60 rounded-sm bg-white mb-3 relative">
+              <button onclick="window.removeArrayItem('humanResources.theses', ${idx})" class="absolute top-2 right-2 text-text-marino/50 hover:text-acento-verde font-mono text-[10px] cursor-pointer">✕</button>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="sm:col-span-3">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Título de la Tesis</label>
+                  <input type="text" value="${thesis.thesisTitle || ''}" oninput="window.updateField('humanResources.theses.${idx}.thesisTitle', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Estudiante</label>
+                  <input type="text" value="${thesis.studentName || ''}" oninput="window.updateField('humanResources.theses.${idx}.studentName', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Rol</label>
+                  <input type="text" value="${thesis.role || 'Asesor'}" oninput="window.updateField('humanResources.theses.${idx}.role', this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" placeholder="Asesor o Coasesor" />
+                </div>
+              </div>
+            </div>
+          `;
+        });
+      } else {
+        thesesHtml = '<p class="text-xs italic text-text-marino/60 mb-4">No se registraron direcciones de tesis.</p>';
+      }
+
+      html = `
+        <div class="space-y-6 max-h-[600px] overflow-y-auto scrollbar-academic pr-2">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Docencia (Cursos Impartidos)
+              </h4>
+              <button onclick="window.addArrayItem('humanResources.teaching')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Curso</button>
+            </div>
+            ${coursesHtml}
+          </div>
+          <hr class="academic-divider" />
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde flex items-center">
+                <span class="text-acento-verde mr-2">§</span> Dirección de Tesis y Proyectos
+              </h4>
+              <button onclick="window.addArrayItem('humanResources.theses')" class="px-3 py-1 border border-acento-verde text-acento-verde text-[10px] font-mono rounded-sm hover:bg-acento-verde hover:text-white transition-all cursor-pointer">+ Agregar Tesis</button>
+            </div>
+            ${thesesHtml}
+          </div>
+        </div>
+      `;
+      editorPanelContent.innerHTML = html;
+    }
+    
+    else if (activeTab === 'grupos') {
+      // Opciones de delegaciones
+      let delegationsOptions = '';
+      referenceDelegations.forEach((d: any) => {
+        delegationsOptions += `<option value="${d.id}" ${delegationId === d.id ? 'selected' : ''}>${d.name}</option>`;
+      });
+
+      // Opciones de facultades (todas; se filtrarán por JS según delegación)
+      let facultiesOptions = '<option value="">Seleccione una facultad...</option>';
+      referenceFaculties.forEach((f: any) => {
+        facultiesOptions += `<option value="${f.id}" data-delegation="${f.delegation_id}">${f.name}</option>`;
+      });
+
+      // Opciones de carreras (todas; se filtrarán por JS según facultad)
+      let careersOptions = '<option value="">Seleccione una carrera...</option>';
+      referenceCareers.forEach((c: any) => {
+        careersOptions += `<option value="${c.id}" data-delegation="${c.delegation_id}">${c.name}</option>`;
+      });
+
+      // Mapa facultad_id → career_ids (para filtrar carreras al seleccionar facultad)
+      const facultyCareerMap = Object.fromEntries(referenceFaculties.map((f: any) => [f.id, f.career_ids || []]));
+
+      // Listado de asignaciones actuales del profesor
+      let assignmentsListHtml = '';
+      if (groupAssignments.length > 0) {
+        groupAssignments.forEach((a: any, idx: number) => {
+          assignmentsListHtml += `
+            <div class="flex items-center justify-between p-3 border border-borde-gris/60 rounded-sm bg-white text-xs">
+              <div>
+                <span class="font-bold text-text-marino">${a.name}</span>
+                <span class="text-text-marino/60 ml-2 font-mono">— Clase: ${a.subject_taught || 'No especificada'}</span>
+              </div>
+              <button type="button" onclick="window.removeGroupAssignment(${idx})" class="text-acento-verde font-mono hover:underline cursor-pointer">Remover</button>
+            </div>
+          `;
+        });
+      } else {
+        assignmentsListHtml = '<p class="text-xs italic text-text-marino/60">No se han asignado grupos a este profesor todavía.</p>';
+      }
+
+      // Opciones de facultades de adscripción
+      let adscriptionFacultiesOptions = '<option value="">No Especificada / Auto-detectar</option>';
+      referenceFaculties.forEach((f: any) => {
+        adscriptionFacultiesOptions += `<option value="${f.id}" data-delegation="${f.delegation_id}" ${adscriptionFacultyId == f.id ? 'selected' : ''}>${f.name}</option>`;
+      });
+
+      html = `
+        <div class="space-y-6 max-h-[600px] overflow-y-auto scrollbar-academic pr-2">
+          <!-- Selección de Delegación y Facultad -->
+          <div>
+            <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center">
+              <span class="text-acento-verde mr-2">§</span> Adscripción Institucional
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Facultad de Adscripción</label>
+                <select id="select-adscription-faculty" onchange="window.updateAdscriptionFaculty(this.value)" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]">
+                  ${adscriptionFacultiesOptions}
+                </select>
+              </div>
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Delegación</label>
+                <select id="select-delegation" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]" disabled>
+                  ${delegationsOptions}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <hr class="academic-divider" />
+
+          <!-- Asignación de Grupos -->
+          <div>
+            <h4 class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center">
+              <span class="text-acento-verde mr-2">§</span> Asignación de Grupos Docentes
+            </h4>
+            
+            <div class="bg-bg-piedra/20 p-4 border border-borde-gris/60 rounded-sm mb-4 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Facultad</label>
+                  <select id="select-group-faculty" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]">
+                    ${facultiesOptions}
+                  </select>
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Carrera</label>
+                  <select id="select-group-career" class="w-full text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]" disabled>
+                    <option value="">Seleccione una carrera...</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Grupo</label>
+                  <div class="flex gap-2">
+                    <select id="select-group" class="flex-grow text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none h-[34px]" disabled>
+                      <option value="">Seleccione un grupo...</option>
+                    </select>
+                    <button type="button" id="btn-create-group-modal" class="px-3 bg-acento-verde text-white text-xs font-mono rounded-sm hover:bg-opacity-90 font-bold cursor-pointer h-[34px]">
+                      + Nuevo
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="font-mono text-[9px] uppercase tracking-wider font-bold text-text-marino/75 block mb-1">Materia Impartida</label>
+                <div class="flex gap-2">
+                  <input id="input-group-subject" type="text" placeholder="Ej: Procesamiento Digital de Señales" class="flex-grow text-xs font-sans bg-white border border-borde-gris rounded-sm p-2 text-text-marino focus:border-acento-verde outline-none" />
+                  <button type="button" id="btn-add-group-assignment" class="px-4 bg-acento-verde text-white text-xs font-mono rounded-sm hover:bg-opacity-90 font-bold cursor-pointer">
+                    Asignar Grupo
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de asignaciones actuales -->
+            <div class="space-y-2" id="group-assignments-list">
+              ${assignmentsListHtml}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Datos embebidos para el script de filtrado en cascada
+      const FACULTY_CAREER_MAP = facultyCareerMap;
+      
+      editorPanelContent.innerHTML = html;
+
+      // Adjuntar listeners de eventos en la pestaña Grupos
+      const selectDelegation = document.getElementById('select-delegation') as HTMLSelectElement;
+      const selectGrpFaculty = document.getElementById('select-group-faculty') as HTMLSelectElement;
+      const selectGrpCareer  = document.getElementById('select-group-career')  as HTMLSelectElement;
+
+      // Al cambiar delegación: filtrar facultades, limpiar carrera y grupo
+      if (selectDelegation) {
+        selectDelegation.addEventListener('change', () => {
+          delegationId = selectDelegation.value ? parseInt(selectDelegation.value, 10) : null;
+          const selectedDelId = selectDelegation.value;
+
+          // Filtrar opciones de facultad
+          if (selectGrpFaculty) {
+            Array.from(selectGrpFaculty.options).forEach(opt => {
+              if (!opt.value) return;
+              opt.hidden = selectedDelId ? opt.getAttribute('data-delegation') !== selectedDelId : false;
+            });
+            selectGrpFaculty.value = '';
+          }
+
+          // Resetear carrera
+          if (selectGrpCareer) {
+            selectGrpCareer.innerHTML = '<option value="">Seleccione una carrera...</option>';
+            selectGrpCareer.disabled = true;
+          }
+
+          // Resetear grupo
+          const selectGrp = document.getElementById('select-group') as HTMLSelectElement;
+          if (selectGrp) {
+            selectGrp.innerHTML = '<option value="">Seleccione un grupo...</option>';
+            selectGrp.disabled = true;
+          }
+        });
+      }
+
+      // Al cambiar facultad: poblar carreras de esa facultad
+      if (selectGrpFaculty) {
+        selectGrpFaculty.addEventListener('change', () => {
+          const facId = selectGrpFaculty.value ? parseInt(selectGrpFaculty.value, 10) : null;
+          if (selectGrpCareer) {
+            selectGrpCareer.innerHTML = '<option value="">Seleccione una carrera...</option>';
+            if (facId && FACULTY_CAREER_MAP[facId]) {
+              const allowedCareerIds: number[] = FACULTY_CAREER_MAP[facId];
+              referenceCareers
+                .filter((c: any) => allowedCareerIds.includes(c.id))
+                .forEach((c: any) => {
+                  const opt = document.createElement('option');
+                  opt.value = String(c.id);
+                  opt.textContent = c.name;
+                  selectGrpCareer.appendChild(opt);
+                });
+              selectGrpCareer.disabled = false;
+            } else {
+              selectGrpCareer.disabled = true;
+            }
+          }
+
+          // Resetear grupo
+          const selectGrp = document.getElementById('select-group') as HTMLSelectElement;
+          if (selectGrp) {
+            selectGrp.innerHTML = '<option value="">Seleccione un grupo...</option>';
+            selectGrp.disabled = true;
+          }
+        });
+      }
+
+      // Al cambiar carrera: cargar grupos via API
+      if (selectGrpCareer) {
+        selectGrpCareer.addEventListener('change', () => {
+          const cid = selectGrpCareer.value ? parseInt(selectGrpCareer.value, 10) : null;
+          if (cid) {
+            loadGroupsForCareer(cid);
+          } else {
+            const selectGrp = document.getElementById('select-group') as HTMLSelectElement;
+            if (selectGrp) {
+              selectGrp.innerHTML = '<option value="">Seleccione un grupo...</option>';
+              selectGrp.disabled = true;
+            }
+          }
+        });
+      }
+
+      const btnCreateGrp = document.getElementById('btn-create-group-modal');
+      if (btnCreateGrp) {
+        btnCreateGrp.addEventListener('click', openCreateGroupModal);
+      }
+
+      const btnAddAssignment = document.getElementById('btn-add-group-assignment');
+      if (btnAddAssignment) {
+        btnAddAssignment.addEventListener('click', () => {
+          const selectGrp = document.getElementById('select-group') as HTMLSelectElement;
+          const inputSubj = document.getElementById('input-group-subject') as HTMLInputElement;
+          const groupId = selectGrp ? parseInt(selectGrp.value, 10) : null;
+          const subject = inputSubj ? inputSubj.value.trim() : '';
+
+          if (!groupId) {
+            alert('Por favor, selecciona un grupo para asignar.');
+            return;
+          }
+
+          const matchedGroup = currentGroups.find((g: any) => g.id === groupId);
+          if (matchedGroup) {
+            // Evitar duplicados
+            if (groupAssignments.some(a => a.class_group_id === groupId)) {
+              alert('El profesor ya está asignado a este grupo.');
+              return;
+            }
+
+            groupAssignments.push({
+              class_group_id: groupId,
+              name: matchedGroup.name,
+              subject_taught: subject
+            });
+
+            if (inputSubj) inputSubj.value = '';
+            renderActiveTab();
+          }
+        });
+      }
+    }
+  }
+
+  // --- VINCULACIÓN GLOBAL DE MÉTODOS A WINDOW ---
+  (window as any).updateField = (path: string, value: string) => {
+    if (!currentCVData) return;
+    
+    const parts = path.split('.');
+    let obj = currentCVData;
+    
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      if (!isNaN(Number(parts[i + 1]))) {
+        obj = obj[part];
+      } else {
+        if (!obj[part]) obj[part] = {};
+        obj = obj[part];
+      }
+    }
+    
+    const lastKey = parts[parts.length - 1];
+    
+    if (value === '') {
+      obj[lastKey] = null;
+    } else if (!isNaN(Number(value)) && lastKey !== 'phone' && lastKey !== 'professionalId' && lastKey !== 'isbn' && lastKey !== 'issn' && lastKey !== 'code' && lastKey !== 'endDate') {
+      obj[lastKey] = value.includes('.') ? parseFloat(value) : parseInt(value);
+    } else {
+      obj[lastKey] = value;
+    }
+
+    // Sincronizar adscriptionFacultyId y delegationId al modificar academicUnit
+    if (path === 'professorData.laborData.academicUnit') {
+      const match = referenceFaculties.find((f: any) => f.name === value);
+      if (match) {
+        adscriptionFacultyId = match.id;
+        delegationId = match.delegation_id;
+      } else {
+        adscriptionFacultyId = null;
+      }
+    }
+  };
+
+  (window as any).removeArrayItem = (path: string, index: number) => {
+    if (!currentCVData || !confirm('¿Estás seguro de que deseas eliminar este elemento?')) return;
+    
+    const parts = path.split('.');
+    let obj = currentCVData;
+    for (let i = 0; i < parts.length - 1; i++) {
+      obj = obj[parts[i]];
+    }
+    
+    const arr = obj[parts[parts.length - 1]];
+    if (Array.isArray(arr)) {
+      arr.splice(index, 1);
+      renderActiveTab();
+    }
+  };
+
+  (window as any).removeGroupAssignment = (index: number) => {
+    groupAssignments.splice(index, 1);
+    renderActiveTab();
+  };
+
+  (window as any).updateAdscriptionFaculty = (val: string) => {
+    adscriptionFacultyId = val ? parseInt(val, 10) : null;
+    
+    // Sincronizar academicUnit en los datos del perfil de texto
+    if (currentCVData && currentCVData.professorData) {
+      if (!currentCVData.professorData.laborData) {
+        currentCVData.professorData.laborData = {};
+      }
+      if (adscriptionFacultyId) {
+        const match = referenceFaculties.find((f: any) => f.id === adscriptionFacultyId);
+        if (match) {
+          currentCVData.professorData.laborData.academicUnit = match.name;
+        }
+      } else {
+        currentCVData.professorData.laborData.academicUnit = '';
+      }
+    }
+
+    const selectFac = document.getElementById('select-adscription-faculty') as HTMLSelectElement;
+    if (selectFac && selectFac.selectedIndex >= 0) {
+      const del = selectFac.options[selectFac.selectedIndex].getAttribute('data-delegation');
+      if (del) {
+        delegationId = parseInt(del, 10);
+        const selectDel = document.getElementById('select-delegation') as HTMLSelectElement;
+        if (selectDel) selectDel.value = String(delegationId);
+      }
+    }
+  };
+
+  (window as any).addArrayItem = (path: string, typeSpec?: string) => {
+    if (!currentCVData) return;
+    
+    const parts = path.split('.');
+    let obj = currentCVData;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!obj[parts[i]]) obj[parts[i]] = {};
+      obj = obj[parts[i]];
+    }
+    
+    const key = parts[parts.length - 1];
+    if (!obj[key]) obj[key] = [];
+    
+    const arr = obj[key];
+    
+    let newItem = {};
+    if (path.endsWith('degrees')) {
+      newItem = { level: 'Licenciatura', title: '', institution: '', professionalId: '', startDate: new Date().getFullYear() - 4, endDate: new Date().getFullYear(), graduationDate: 'grado' };
+    } else if (path.endsWith('certifications')) {
+      newItem = { title: '', institution: '', year: new Date().getFullYear(), hours: 20, profile: 'Pedagógico', scope: 'Institucional' };
+    } else if (path.endsWith('scientificProduction')) {
+      if (typeSpec === 'Artículo Científico') {
+        newItem = { type: 'Artículo Científico', title: '', journalName: '', year: new Date().getFullYear(), impactFactor: null, doiOrUrl: '', authors: [currentCVData.professorData.fullName] };
+      } else {
+        newItem = { type: 'Libro', title: '', role: 'Coautor', editorial: '', year: new Date().getFullYear(), authors: [currentCVData.professorData.fullName] };
+      }
+    } else if (path.endsWith('educationalMaterials')) {
+      newItem = { type: 'Material Didáctico', resourceType: 'Recurso digital', title: '', year: new Date().getFullYear(), accessUrl: '', description: '', authors: [currentCVData.professorData.fullName] };
+    } else if (path.endsWith('teaching')) {
+      newItem = { courseName: '', level: 'Licenciatura', students: 25, period: 'Ago-Ene', year: new Date().getFullYear() };
+    } else if (path.endsWith('theses')) {
+      newItem = { studentName: '', thesisTitle: '', endDate: new Date().getFullYear(), role: 'Asesor' };
+    }
+
+    arr.push(newItem);
+    renderActiveTab();
+  };
+</script>

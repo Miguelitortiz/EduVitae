@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # 1. Base de datos PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: eduvitae-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: eduvitae
+      POSTGRES_USER: ${DB_USER:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin_pass}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Servidor de API y extractor (admin-backend)
+  admin-backend:
+    build:
+      context: .
+      dockerfile: services/admin-backend/Dockerfile
+    container_name: eduvitae-admin-backend
+    restart: always
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-admin}:${DB_PASSWORD:-admin_pass}@postgres:5432/eduvitae
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin_pass}
+      PORT: 6769
+      PYTHON_PATH: python3
+    volumes:
+      - temp_uploads:/app/temp_uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 3. Interfaz Administrativa (admin-frontend)
+  admin-frontend:
+    build:
+      context: .
+      dockerfile: services/admin-frontend/Dockerfile
+    container_name: eduvitae-admin-frontend
+    restart: always
+    depends_on:
+      - admin-backend
+
+  # 4. Vitrina Pública (app-public)
+  app-public:
+    build:
+      context: .
+      dockerfile: services/app-public/Dockerfile
+      args:
+        # Nota: Durante el primer "docker-compose up --build", Postgres no estará listo todavía en la red de compilación de docker,
+        # por lo que el script generate-static-data.js detectará el fallo y utilizará las semillas locales de respaldo.
+        DATABASE_URL: postgres://${DB_USER:-admin}:${DB_PASSWORD:-admin_pass}@postgres:5432/eduvitae
+    container_name: eduvitae-app-public
+    restart: always
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-admin}:${DB_PASSWORD:-admin_pass}@postgres:5432/eduvitae
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # 5. Proxy de Entrada (Nginx Reverse Proxy)
+  proxy:
+    build:
+      context: ./services/proxy
+      dockerfile: Dockerfile
+    container_name: eduvitae-proxy
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - proxy_cache:/var/cache/nginx
+    depends_on:
+      - app-public
+      - admin-frontend
+      - admin-backend
+
+volumes:
+  postgres_data:
+    driver: local
+  temp_uploads:
+    driver: local
+  proxy_cache:
+    driver: local

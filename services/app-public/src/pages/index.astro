@@ -1,0 +1,131 @@
+---
+import InstitutionalLayout from "../layouts/InstitutionalLayout.astro";
+---
+
+<InstitutionalLayout
+  title="Portal de Claustro Académico e Investigadores"
+  description="Acceso formal al registro de trayectorias profesionales, producción científica y asignación académica de la Universidad de Colima."
+>
+  <div class="max-w-4xl mx-auto py-8 sm:py-16 space-y-12">
+    <!-- Hero Section -->
+    <div class="space-y-4 text-center">
+      <span
+        class="font-section text-xs uppercase tracking-widest font-bold text-acento-verde bg-bg-piedra/60 px-3 py-1.5 rounded-sm border border-borde-gris/40"
+      >
+        Universidad de Colima
+      </span>
+      <h1
+        class="font-display text-4xl sm:text-5xl font-bold tracking-tight text-text-marino max-w-3xl mx-auto leading-tight"
+      >
+        Portal de Claustro Académico <br class="hidden sm:inline" />e
+        Investigadores
+      </h1>
+      <p
+        class="font-sans text-sm sm:text-base text-text-marino/70 max-w-xl mx-auto leading-relaxed"
+      >
+        Registro oficial y consulta de perfiles docentes, producción científica,
+        docencia y adscripción académica de nuestra planta docente.
+      </p>
+    </div>
+
+    <!-- Divider -->
+    <div class="flex justify-center">
+      <hr class="academic-divider-double w-24" />
+    </div>
+
+    <!-- Main Navigation Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+      <!-- Action Card 1: Buscar Profesor -->
+      <a
+        href="/buscar-profesor"
+        class="group border border-borde-gris p-8 bg-white rounded-sm hover:border-acento-verde hover:shadow-lg transition-all duration-300 flex flex-col justify-between no-underline relative overflow-hidden"
+      >
+        <div class="space-y-4">
+          <!-- Icon and Tag -->
+          <div class="flex items-center justify-between">
+            <span
+              class="font-section text-[9px] uppercase tracking-wider font-semibold text-text-marino/40 bg-bg-piedra px-2 py-1 rounded-sm"
+            >
+              Consulta de Perfiles
+            </span>
+          </div>
+          <!-- Title -->
+          <h2
+            class="font-display text-2xl font-bold text-text-marino group-hover:text-acento-verde transition-colors duration-200"
+          >
+            Buscar Profesor
+          </h2>
+          <!-- Description -->
+          <p class="font-sans text-xs text-text-marino/75 leading-relaxed">
+            Accede al directorio de docentes e investigadores. Busca por nombre,
+            grado de estudios, departamento, publicaciones científicas o
+            materias que imparten.
+          </p>
+        </div>
+
+        <div
+          class="mt-8 pt-4 border-t border-borde-gris/40 flex items-center justify-between"
+        >
+          <span
+            class="text-xs font-semibold text-acento-verde group-hover:translate-x-1.5 transition-transform duration-250 inline-flex items-center gap-1"
+          >
+            Ir al buscador de docentes &rarr;
+          </span>
+        </div>
+
+        <!-- Subtle background detail -->
+        <div
+          class="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-acento-verde/5 rounded-tl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        >
+        </div>
+      </a>
+
+      <!-- Action Card 2: Buscar por Grupo/Dependencia -->
+      <a
+        href="/buscar-grupo"
+        class="group border border-borde-gris p-8 bg-white rounded-sm hover:border-acento-verde hover:shadow-lg transition-all duration-300 flex flex-col justify-between no-underline relative overflow-hidden"
+      >
+        <div class="space-y-4">
+          <!-- Icon and Tag -->
+          <div class="flex items-center justify-between">
+            <span
+              class="font-section text-[9px] uppercase tracking-wider font-semibold text-text-marino/40 bg-bg-piedra px-2 py-1 rounded-sm"
+            >
+              Estructura Académica
+            </span>
+          </div>
+          <!-- Title -->
+          <h2
+            class="font-display text-2xl font-bold text-text-marino group-hover:text-acento-verde transition-colors duration-200"
+          >
+            Buscar por Grupo / Dependencia
+          </h2>
+          <!-- Description -->
+          <p class="font-sans text-xs text-text-marino/75 leading-relaxed">
+            Explora el claustro docente organizado por delegaciones
+            universitarias, carreras específicas y grupos de clase del período
+            escolar vigente.
+          </p>
+        </div>
+
+        <div
+          class="mt-8 pt-4 border-t border-borde-gris/40 flex items-center justify-between"
+        >
+          <span
+            class="text-xs font-semibold text-acento-verde group-hover:translate-x-1.5 transition-transform duration-250 inline-flex items-center gap-1"
+          >
+            Explorar grupos docentes &rarr;
+          </span>
+        </div>
+
+        <!-- Subtle background detail -->
+        <div
+          class="absolute bottom-0 right-0 w-24 h-24 bg-gradient-to-br from-transparent to-acento-verde/5 rounded-tl-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        >
+        </div>
+      </a>
+    </div>
+
+    <!-- Footer Stats / Details -->
+  </div>
+</InstitutionalLayout>

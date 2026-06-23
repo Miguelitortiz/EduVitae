@@ -1,0 +1,346 @@
+---
+import InstitutionalLayout from "../../layouts/InstitutionalLayout.astro";
+import IdentityCard from "../../components/IdentityCard.astro";
+import PublicationList from "../../components/PublicationList.astro";
+import TeachingList from "../../components/TeachingList.astro";
+import ImpactSidebar from "../../components/ImpactSidebar.astro";
+import HorizontalTimeline from "../../components/HorizontalTimeline.astro";
+import { cargarProfesor } from "../../lib/cargarProfesores.js";
+
+const { slug } = Astro.params;
+const profesor = await cargarProfesor(slug);
+
+if (!profesor) {
+  return Astro.redirect('/404');
+}
+
+const {
+  fullName,
+  title,
+  department,
+  institutionalEmail,
+  admissionYear,
+  photoUrl,
+  academicFormation,
+  scientificProduction,
+  educationalMaterials,
+  teaching,
+  certifications,
+  academicBody,
+} = profesor;
+---
+
+<InstitutionalLayout
+  title={fullName}
+  description={`Perfil académico de ${fullName}, ${title} del departamento de ${department}.`}
+  slug={profesor.slug}
+>
+  <!-- Estructura de Dos Columnas (Two-Column): Columna lateral fija (3 cols) | Columna principal fluida (7 cols) -->
+  <div
+    class="max-w-5xl mx-auto space-y-4 lg:space-y-0 lg:grid lg:grid-cols-10 lg:gap-6 items-start"
+  >
+    <!-- Columna Lateral Izquierda (Perfil + Indicadores): lg:col-span-3 -->
+    <div
+      class="accordion-item border border-borde-gris lg:border-none rounded-sm bg-white lg:bg-transparent lg:col-span-3 overflow-hidden"
+    >
+      <!-- Encabezado Acordeón Móvil (Solo visible en móviles) -->
+      <button
+        class="accordion-header lg:hidden w-full flex justify-between items-center p-4 bg-bg-piedra/60 font-section text-xs uppercase tracking-wider font-bold text-text-marino cursor-pointer"
+      >
+        <span>Perfil e Indicadores</span>
+        <span class="accordion-icon font-mono font-bold text-sm">−</span>
+      </button>
+
+      <!-- Contenido (Abierto por defecto en móvil, visible siempre en desktop) -->
+      <div
+        class="accordion-content p-4 lg:p-0 space-y-6 transition-all duration-200"
+      >
+        <IdentityCard
+          fullName={fullName}
+          title={title}
+          department={department}
+          institutionalEmail={institutionalEmail}
+          admissionYear={admissionYear}
+          photoUrl={photoUrl}
+        />
+
+        <ImpactSidebar
+          admissionYear={admissionYear}
+          articles={scientificProduction.articles}
+          theses={teaching.theses}
+          academicBody={academicBody}
+        />
+      </div>
+    </div>
+
+    <!-- Columna Principal Derecha (Logros y Trayectoria): lg:col-span-7 -->
+    <div
+      class="accordion-item border border-borde-gris lg:border-none rounded-sm bg-white lg:bg-transparent lg:col-span-7 overflow-hidden"
+    >
+      <!-- Encabezado Acordeón Móvil (Solo visible en móviles) -->
+      <button
+        class="accordion-header lg:hidden w-full flex justify-between items-center p-4 bg-bg-piedra/60 font-section text-xs uppercase tracking-wider font-bold text-text-marino cursor-pointer"
+      >
+        <span>Trayectoria y Logros</span>
+        <span class="accordion-icon font-mono font-bold text-sm">+</span>
+      </button>
+
+      <!-- Contenido (Cerrado por defecto en móvil, visible siempre en desktop) -->
+      <div class="accordion-content p-4 lg:p-0 hidden lg:block space-y-6">
+        <!-- Línea de Tiempo Horizontal (Formación) -->
+        <HorizontalTimeline academicFormation={academicFormation} />
+
+        <!-- Pestañas (Tabs) con Altura Fija y Scroll Interno -->
+        <div
+          class="bg-white border border-borde-gris rounded-sm flex flex-col h-[622px]"
+        >
+          <!-- Encabezado de Pestañas -->
+          <div
+            class="flex border-b border-borde-gris font-section text-[10px] sm:text-xs uppercase tracking-wider font-bold bg-bg-piedra/40"
+          >
+            <button
+              class="tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-acento-verde text-acento-verde cursor-pointer transition-all duration-150"
+              data-tab="publicaciones"
+            >
+              Publicaciones
+            </button>
+            <button
+              class="tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150"
+              data-tab="materias"
+            >
+              Materias
+            </button>
+            <button
+              class="tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150"
+              data-tab="tesis"
+            >
+              Tesis
+            </button>
+            <button
+              class="tab-btn px-4 py-3 hover:text-acento-verde border-b-2 border-transparent text-text-marino/70 cursor-pointer transition-all duration-150"
+              data-tab="recursos"
+            >
+              Materiales y Cert.
+            </button>
+          </div>
+
+          <!-- Contenedores de Paneles con Scroll Interno -->
+          <div class="p-5 overflow-y-auto scrollbar-academic flex-1">
+            <!-- Panel 1: Publicaciones (Con buscador y filtros) -->
+            <div class="tab-panel" id="panel-publicaciones">
+              <PublicationList
+                articles={scientificProduction.articles}
+                books={scientificProduction.books}
+              />
+            </div>
+
+            <!-- Panel 2: Materias -->
+            <div class="tab-panel hidden" id="panel-materias">
+              <TeachingList
+                courses={teaching.courses}
+                showOnly="courses"
+              />
+            </div>
+
+            <!-- Panel 3: Tesis -->
+            <div class="tab-panel hidden" id="panel-tesis">
+              <TeachingList
+                theses={teaching.theses}
+                showOnly="theses"
+              />
+            </div>
+
+            <!-- Panel 3: Recursos y Certificaciones -->
+            <div class="tab-panel hidden" id="panel-recursos" class="space-y-6">
+              <div class="space-y-6">
+                <!-- Materiales Didácticos -->
+                <div>
+                  <h4
+                    class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center"
+                  >
+                    <span class="text-acento-verde mr-2">§</span> Recursos Didácticos
+                  </h4>
+                  {
+                    educationalMaterials && educationalMaterials.length > 0 ? (
+                      <ul class="list-square text-xs font-sans">
+                        {educationalMaterials.slice(0, 3).map((mat: any) => (
+                          <li>
+                            <span class="font-medium text-text-marino">
+                              {mat.title}
+                            </span>
+                            <span class="text-text-marino/60 uppercase text-[9px] tracking-wide ml-1 font-semibold">
+                              ({mat.type})
+                            </span>
+                            {mat.url && (
+                              <span class="ml-1.5">
+                                <a
+                                  href={mat.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  class="link-academic text-[10px] font-mono"
+                                >
+                                  → Enlace
+                                </a>
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p class="text-xs italic text-text-marino/60 font-sans">
+                        No se registran recursos didácticos.
+                      </p>
+                    )
+                  }
+                </div>
+
+                <hr class="academic-divider" />
+
+                <!-- Certificaciones -->
+                <div>
+                  <h4
+                    class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde mb-3 flex items-center"
+                  >
+                    <span class="text-acento-verde mr-2">§</span> Certificaciones Académicas
+                  </h4>
+                  {
+                    certifications && certifications.length > 0 ? (
+                      <ul class="list-square text-xs font-sans">
+                        {certifications.slice(0, 2).map((cert: any) => (
+                          <li>
+                            <span class="font-medium text-text-marino">
+                              {cert.title}
+                            </span>
+                            <span class="text-text-marino/65 font-semibold">
+                              {" "}
+                              &bull; {cert.institution}
+                            </span>
+                            <span class="font-mono text-[10px] text-text-marino/50">
+                              {" "}
+                              ({cert.year})
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p class="text-xs italic text-text-marino/60 font-sans">
+                        No se registran certificaciones.
+                      </p>
+                    )
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script Vanilla JS para Interactividad de la Vitrina -->
+  <script>
+    // --- CONTROL DE PESTAÑAS (TABS) ---
+    function setupTabs() {
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tabContainer = btn.closest(".accordion-content");
+          if (!tabContainer) return;
+
+          tabContainer.querySelectorAll(".tab-btn").forEach((b) => {
+            b.classList.remove(
+              "text-acento-verde",
+              "border-b-acento-verde",
+            );
+            b.classList.add("border-transparent", "text-text-marino/70");
+          });
+
+          btn.classList.add("text-acento-verde", "border-b-acento-verde");
+          btn.classList.remove("border-transparent", "text-text-marino/70");
+
+          tabContainer.querySelectorAll(".tab-panel").forEach((panel) => {
+            panel.classList.add("hidden");
+          });
+
+          const tabId = btn.getAttribute("data-tab");
+          const targetPanel = tabContainer.querySelector(`#panel-${tabId}`);
+          if (targetPanel) {
+            targetPanel.classList.remove("hidden");
+          }
+        });
+      });
+    }
+
+    // --- CONTROL DE MODALES (VER DETALLES) ---
+    function setupModals() {
+      // Usar delegación de eventos en el body para elementos dinámicos o componentes cargados
+      document.body.addEventListener("click", (e) => {
+        const target = e.target as HTMLElement;
+        const openBtn = target.closest("[data-open]");
+
+        if (openBtn) {
+          const modalId = openBtn.getAttribute("data-open");
+          if (modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+              modal.classList.remove("hidden");
+              modal.classList.add("flex");
+              document.body.style.overflow = "hidden";
+            }
+          }
+          return;
+        }
+
+        const closeBtn = target.closest(".close-modal");
+        if (closeBtn) {
+          const modal = closeBtn.closest(".modal-overlay");
+          if (modal) {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            document.body.style.overflow = "";
+          }
+          return;
+        }
+
+        // Si se hace clic en el overlay de fondo del modal
+        const overlay = target.closest(".modal-overlay");
+        if (overlay && target === overlay) {
+          overlay.classList.add("hidden");
+          overlay.classList.remove("flex");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+
+    // --- CONTROL DE ACORDEONES MÓVILES ---
+    function setupAccordions() {
+      document.querySelectorAll(".accordion-header").forEach((header) => {
+        header.addEventListener("click", () => {
+          const item = header.closest(".accordion-item");
+          if (!item) return;
+          const content = item.querySelector(".accordion-content");
+          const icon = item.querySelector(".accordion-icon");
+
+          if (content && icon) {
+            if (content.classList.contains("hidden")) {
+              content.classList.remove("hidden");
+              icon.textContent = "−";
+            } else {
+              content.classList.add("hidden");
+              icon.textContent = "+";
+            }
+          }
+        });
+      });
+    }
+
+    // Inicializar listeners al cargar y en transiciones de página
+    function initAll() {
+      setupTabs();
+      setupModals();
+      setupAccordions();
+    }
+
+    initAll();
+    document.addEventListener("astro:page-load", initAll);
+  </script>
+</InstitutionalLayout>

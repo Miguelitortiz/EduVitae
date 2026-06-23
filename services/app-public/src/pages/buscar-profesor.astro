@@ -1,0 +1,251 @@
+---
+import InstitutionalLayout from '../layouts/InstitutionalLayout.astro';
+import TeacherGrid from '../components/TeacherGrid.astro';
+import { cargarProfesores } from '../lib/cargarProfesores.js';
+import { cargarDelegaciones, cargarFacultades } from '../lib/cargarDatos.js';
+
+const profesores = await cargarProfesores();
+const delegaciones = cargarDelegaciones();
+const facultades = cargarFacultades();
+
+// Serializar el mapa facultad → career_ids para el script cliente
+const facultadesMap = facultades.map(f => ({
+  id: f.id,
+  delegation_id: f.delegation_id,
+  name: f.name,
+  career_ids: f.career_ids || []
+}));
+---
+
+<InstitutionalLayout 
+  title="Buscador de Profesores e Investigadores" 
+  description="Directorio formal y buscador de docentes investigadores. Consulta perfiles, docencia y producción por nombre y filtros."
+>
+  <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Migas de Pan (Breadcrumbs) -->
+    <div class="text-xs font-mono text-text-marino/60 flex items-center gap-1.5">
+      <a href="/" class="hover:text-acento-verde transition-colors">Inicio</a>
+      <span>/</span>
+      <span class="text-text-marino font-bold">Buscar Profesor</span>
+    </div>
+
+    <!-- Encabezado -->
+    <div class="space-y-2">
+      <span class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde">Consulta de Personal Docente</span>
+      <h1 class="font-display text-3xl font-bold tracking-tight text-text-marino">Buscador de Claustro</h1>
+      <p class="font-sans text-sm text-text-marino/70 max-w-2xl leading-relaxed">
+        Busca y filtra perfiles académicos. Ingresa un nombre, asignatura o cargo, y selecciona filtros de adscripción para ver los docentes asignados.
+      </p>
+    </div>
+
+    <hr class="academic-divider-double" />
+
+    <!-- Panel de Búsqueda y Filtros -->
+    <div class="bg-bg-piedra/30 border border-borde-gris/50 p-6 rounded-sm space-y-4">
+      <!-- Buscador por texto -->
+      <div class="relative">
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Escribe el nombre del docente, cargo, departamento, materia..."
+          class="w-full text-sm font-sans bg-white border border-borde-gris rounded-sm p-4 pl-12 text-text-marino focus:border-acento-verde outline-none shadow-sm transition-all"
+        />
+        
+      </div>
+
+      <!-- Filtros desplegables (Delegación y Facultad) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Selector de Delegación -->
+        <div class="flex flex-col gap-1.5">
+          <label for="delegation-filter" class="font-section text-[10px] uppercase tracking-wider font-bold text-text-marino/70">
+            Filtrar por Delegación
+          </label>
+          <select 
+            id="delegation-filter" 
+            class="text-xs font-sans bg-white border border-borde-gris rounded-sm p-3 text-text-marino focus:border-acento-verde outline-none cursor-pointer"
+          >
+            <option value="">Todas las delegaciones</option>
+            {delegaciones.map(del => (
+              <option value={del.id}>{del.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <!-- Selector de Facultad -->
+        <div class="flex flex-col gap-1.5">
+          <label for="faculty-filter" class="font-section text-[10px] uppercase tracking-wider font-bold text-text-marino/70">
+            Filtrar por Facultad
+          </label>
+          <select 
+            id="faculty-filter" 
+            class="text-xs font-sans bg-white border border-borde-gris rounded-sm p-3 text-text-marino focus:border-acento-verde outline-none cursor-pointer"
+          >
+            <option value="">Todas las facultades</option>
+            {facultades.map(fac => (
+              <option value={fac.id} data-delegation={fac.delegation_id}>{fac.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje de Estado Inicial (Vacío) -->
+    <div id="initial-state-msg" class="border border-borde-gris/60 border-dashed rounded-sm p-12 text-center bg-white space-y-3">
+      <span class="text-4xl block filter grayscale"></span>
+      <h3 class="font-display text-base font-bold text-text-marino">Comienza tu búsqueda</h3>
+      <p class="text-xs text-text-marino/60 max-w-sm mx-auto leading-relaxed">
+        Para ver la lista de docentes, por favor escribe en la barra de búsqueda o selecciona alguna delegación o facultad en los filtros superiores.
+      </p>
+    </div>
+
+    <!-- Wrapper para la lista de profesores (Oculto por defecto) -->
+    <div id="teachers-grid-wrapper" class="hidden">
+      <TeacherGrid profesores={profesores} />
+    </div>
+    
+    <!-- Mensaje de sin resultados -->
+    <div id="no-results-msg" class="hidden border border-borde-gris/60 border-dashed rounded-sm p-12 text-center bg-white space-y-2">
+      <span class="text-4xl block">⚠️</span>
+      <h3 class="font-display text-base font-bold text-text-marino">Sin coincidencias</h3>
+      <p class="text-xs text-text-marino/60 font-sans max-w-sm mx-auto leading-relaxed">
+        No se encontraron profesores que coincidan con la búsqueda de texto y los filtros seleccionados. Intenta cambiar los criterios de búsqueda.
+      </p>
+    </div>
+  </div>
+
+  <!-- Mapa de facultades embebido para el script cliente -->
+  <script type="application/json" id="facultades-map">
+    {JSON.stringify(facultadesMap)}
+  </script>
+
+  <!-- Script interactivo de filtrado -->
+  <script>
+    function setupSearch() {
+      const searchInput = document.getElementById('search-input') as HTMLInputElement;
+      const delegationFilter = document.getElementById('delegation-filter') as HTMLSelectElement;
+      const facultyFilter = document.getElementById('faculty-filter') as HTMLSelectElement;
+
+      const initialStateMsg = document.getElementById('initial-state-msg');
+      const teachersGridWrapper = document.getElementById('teachers-grid-wrapper');
+      const noResultsMsg = document.getElementById('no-results-msg');
+
+      if (!searchInput || !delegationFilter || !facultyFilter) return;
+
+      // Cargar el mapa de facultades desde el JSON embebido
+      let facultadesMap: Array<{ id: number; delegation_id: number; name: string; career_ids: number[] }> = [];
+      try {
+        const mapEl = document.getElementById('facultades-map');
+        if (mapEl) facultadesMap = JSON.parse(mapEl.textContent || '[]');
+      } catch(e) {}
+
+      // Filtrar opciones de facultad según la delegación seleccionada
+      function updateFacultyOptions() {
+        const selectedDelegation = delegationFilter.value;
+        const currentFacultyValue = facultyFilter.value;
+
+        Array.from(facultyFilter.options).forEach(opt => {
+          if (opt.value === '') return; // Siempre mostrar "Todas las facultades"
+          const optDelegation = opt.getAttribute('data-delegation') || '';
+          if (selectedDelegation === '' || optDelegation === selectedDelegation) {
+            opt.hidden = false;
+          } else {
+            opt.hidden = true;
+          }
+        });
+
+        // Si la facultad seleccionada quedó oculta, resetear
+        const selectedOpt = facultyFilter.options[facultyFilter.selectedIndex];
+        if (selectedOpt && selectedOpt.hidden) {
+          facultyFilter.value = '';
+        }
+      }
+
+      function performFilter() {
+        const query = searchInput.value.toLowerCase().trim();
+        const selectedDelegation = delegationFilter.value;
+        const selectedFaculty = facultyFilter.value;
+
+        // Comprobar si hay filtros activos
+        const isFilterActive = query !== '' || selectedDelegation !== '' || selectedFaculty !== '';
+
+        if (!isFilterActive) {
+          if (initialStateMsg) initialStateMsg.classList.remove('hidden');
+          if (teachersGridWrapper) teachersGridWrapper.classList.add('hidden');
+          if (noResultsMsg) noResultsMsg.classList.add('hidden');
+          return;
+        }
+
+        if (initialStateMsg) initialStateMsg.classList.add('hidden');
+
+        // Obtener career_ids de la facultad seleccionada (si aplica)
+        let selectedFacultyCareerIds: number[] = [];
+        if (selectedFaculty !== '') {
+          const fac = facultadesMap.find(f => f.id === parseInt(selectedFaculty, 10));
+          if (fac) selectedFacultyCareerIds = fac.career_ids;
+        }
+
+        const cards = document.querySelectorAll('.teacher-card');
+        let visibleCount = 0;
+
+        cards.forEach((card: any) => {
+          const cardText = card.textContent?.toLowerCase() || '';
+          const cardDelegation = card.getAttribute('data-delegation') || '';
+          const cardCareersRaw = card.getAttribute('data-careers') || '[]';
+          
+          const cardFaculty = card.getAttribute('data-faculty') || '';
+          
+          let cardCareers: number[] = [];
+          try {
+            cardCareers = JSON.parse(cardCareersRaw);
+          } catch(e) {}
+
+          // Validar término de búsqueda (Keyword)
+          const matchesQuery = query === '' || cardText.includes(query);
+
+          // Validar delegación
+          const matchesDelegation = selectedDelegation === '' || cardDelegation === selectedDelegation;
+
+          // Validar facultad: coincidencia explícita de ID de facultad O alguna de sus carreras
+          const matchesFaculty = selectedFaculty === '' || 
+            cardFaculty === selectedFaculty || 
+            selectedFacultyCareerIds.some(cid => cardCareers.includes(cid));
+
+          if (matchesQuery && matchesDelegation && matchesFaculty) {
+            card.classList.remove('hidden');
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.classList.add('hidden');
+            card.style.display = 'none';
+          }
+        });
+
+        // Mostrar / Ocultar grilla y mensaje de sin resultados
+        if (visibleCount === 0) {
+          if (teachersGridWrapper) teachersGridWrapper.classList.add('hidden');
+          if (noResultsMsg) noResultsMsg.classList.remove('hidden');
+        } else {
+          if (teachersGridWrapper) teachersGridWrapper.classList.remove('hidden');
+          if (noResultsMsg) noResultsMsg.classList.add('hidden');
+        }
+      }
+
+      // Escuchar eventos
+      searchInput.addEventListener('input', performFilter);
+      delegationFilter.addEventListener('change', () => {
+        updateFacultyOptions();
+        performFilter();
+      });
+      facultyFilter.addEventListener('change', performFilter);
+      
+      // Ejecutar inicialmente
+      updateFacultyOptions();
+      performFilter();
+    }
+
+    // Inicialización de Astro
+    setupSearch();
+    document.addEventListener('astro:page-load', setupSearch);
+  </script>
+</InstitutionalLayout>
+

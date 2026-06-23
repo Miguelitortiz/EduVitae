@@ -1,0 +1,81 @@
+---
+import InstitutionalLayout from "../layouts/InstitutionalLayout.astro";
+import { cargarDelegaciones } from "../lib/cargarDatos.js";
+
+const delegaciones = cargarDelegaciones();
+---
+
+<InstitutionalLayout
+  title="Explorar por Grupo y Dependencia"
+  description="Navegación jerárquica por delegaciones, carreras y grupos de clase de la Universidad de Colima."
+>
+  <div class="max-w-4xl mx-auto space-y-6">
+    <!-- Migas de Pan (Breadcrumbs) -->
+    <div
+      class="text-xs font-mono text-text-marino/60 flex items-center gap-1.5"
+    >
+      <a href="/" class="hover:text-acento-verde transition-colors">Inicio</a>
+      <span>/</span>
+      <span class="text-text-marino font-bold"
+        >Buscar por Grupo o Dependencia</span
+      >
+    </div>
+
+    <!-- Encabezado -->
+    <div class="space-y-2">
+      <span
+        class="font-section text-xs uppercase tracking-widest font-semibold text-acento-verde"
+        >Estructura Universitaria</span
+      >
+      <h1
+        class="font-display text-3xl font-bold tracking-tight text-text-marino"
+      >
+        Delegaciones Territoriales
+      </h1>
+      <p
+        class="font-sans text-sm text-text-marino/70 max-w-2xl leading-relaxed"
+      >
+        Explora las carreras académicas y claustros docentes activos según la
+        delegación geográfica de la Universidad de Colima.
+      </p>
+    </div>
+
+    <hr class="academic-divider-double" />
+
+    <!-- Listado de Delegaciones -->
+    <div class="space-y-4">
+      <h2
+        class="font-section text-xs uppercase tracking-wider font-semibold text-text-marino/50 mb-4 flex items-center gap-1.5"
+      >
+        Selecciona una Delegación
+      </h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {
+          delegaciones.map((del) => (
+            <a
+              href={`/delegaciones/${del.slug}`}
+              class="group border border-borde-gris p-6 bg-white rounded-sm hover:border-acento-verde hover:shadow-md transition-all duration-200 flex flex-col justify-between no-underline"
+            >
+              <div class="space-y-2">
+                <span class="font-section text-[9px] uppercase tracking-wider font-bold text-acento-verde block">
+                  Dependencia Territorial
+                </span>
+                <span class="font-display text-xl font-bold text-text-marino group-hover:text-acento-verde transition-colors">
+                  {del.name}
+                </span>
+                <p class="font-sans text-xs text-text-marino/65 leading-relaxed">
+                  Ver programas educativos, carreras y claustros adscritos a la
+                  delegación {del.name}.
+                </p>
+              </div>
+              <span class="link-academic text-[11px] font-semibold mt-6 block">
+                Explorar programas acad&eacute;micos &rarr;
+              </span>
+            </a>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</InstitutionalLayout>

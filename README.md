@@ -1,103 +1,93 @@
-# EduVitae - Portal Académico e Extractor Curricular
+# EduVitae - Claustro Docente e Extractor Curricular (Monorepo)
 
-EduVitae se ha reorganizado en una arquitectura de múltiples subproyectos para separar la visualización pública de la administración y extracción de datos. Este repositorio ahora se compone de dos aplicaciones principales construidas con **Astro** y estilizadas con **Tailwind CSS (v4)** usando una paleta de colores unificada basada en verde académico (`#527630`):
+EduVitae es una plataforma profesional, desacoplada y lista para producción, diseñada para gestionar y visualizar perfiles académicos de profesores investigadores adscritos a la Universidad de Colima.
 
-1. **`App` (Vitrina Pública)**: Portal web estático y optimizado para mostrar los perfiles académicos de profesores investigadores.
-2. **`CV-UI` (Herramienta Administrativa)**: Interfaz local que permite subir currículums oficiales en formato PDF (Universidad de Colima), extraer su información mediante scripts de Python, editar los datos en un formulario amigable y exportar el perfil resultante directamente a la vitrina pública.
+Esta solución está organizada en un **Monorepo** orquestado mediante **Docker Compose** y cuenta con una arquitectura de múltiples subproyectos para separar la visualización pública (estática, compilada por SSG) del panel administrativo y extractor de datos (API dinámica y editor visual).
 
 ---
 
-## 📁 Estructura del Repositorio
+## 📁 Estructura del Monorepo
 
 ```
 EduVitae/
-├── App/                     # Sitio web público del claustro docente
-│   ├── src/
-│   │   ├── content/
-│   │   │   └── profesores/  # Archivos JSON con los perfiles de los docentes
-│   │   ├── components/      # Componentes visuales (IdentityCard, PublicationList, etc.)
-│   │   └── ...
-│   ├── package.json         # Ejecuta en puerto 6767
-│   └── ...
-├── CV-UI/                   # Interfaz de extracción y edición
-│   ├── cv_extractor/        # Carpeta con scripts de Python y almacenamiento temporal
-│   │   ├── cv_scraper.py    # Extractor de datos de PDF a JSON
-│   │   ├── format_cv.py     # Adaptador de JSON para exportar a App
-│   │   └── ...
-│   ├── src/
-│   │   ├── pages/
-│   │   │   └── index.astro  # Editor visual y cargador de PDF
-│   │   └── ...
-│   ├── server.js            # Servidor backend de Node.js (Express, puerto 6769)
-│   ├── package.json         # Ejecuta en puerto 6768
-│   └── ...
-└── README.md                # Esta guía general
+├── data/
+│   └── reference/
+│       ├── delegations.yaml        # Lista inmutable de Delegaciones (ID, slug, name)
+│       ├── careers.yaml            # Lista inmutable de Carreras (ID, slug, delegation_id, name)
+│       └── seed_professors/        # Copias locales de respaldo de perfiles (para builds de Docker)
+├── scripts/
+│   ├── init.sql                    # Inicialización DDL de PostgreSQL + Datos Semilla
+│   └── generate-static-data.js     # Script para leer referencias YAML y BD y generar JSONs estáticos
+├── services/
+│   ├── app-public/                 # Vitrina pública construida en Astro (SSG)
+│   │   ├── src/
+│   │   │   ├── content/            # Destino donde se volcarán los JSONs generados (Solo en build)
+│   │   │   └── pages/              # Rutas anidadas para exploración estática
+│   │   └── Dockerfile              # Construcción en Node, servido con Nginx
+│   ├── admin-frontend/             # Panel administrativo para carga y edición (Astro)
+│   │   ├── src/                    # Editor visual y cargador de PDF
+│   │   └── Dockerfile              # Construcción estática servida por Nginx
+│   ├── admin-backend/              # API Server (Express) + Python Extractor
+│   │   ├── cv_extractor/           # Scripts de python para parsear y formatear PDF
+│   │   ├── server.js               # API REST conectada a PostgreSQL
+│   │   └── Dockerfile              # Imagen multinivel Node.js + Python 3
+│   └── proxy/                      # Nginx Reverse Proxy para orquestación de tráfico
+│       └── default.conf            # Reglas de enrutamiento
+├── docker-compose.yml              # Orquestador del monorepo
+├── .env.production                 # Variables de entorno de producción
+└── README.md                       # Esta guía
 ```
 
 ---
 
-## ⚙️ Requisitos Previos
+## ⚙️ Reglas de Enrutamiento del Proxy (Nginx)
 
-- **Node.js** v22 o superior.
-- **Python 3** con las librerías necesarias para la extracción (entorno virtual `venv`).
-- **npm** para la gestión de paquetes de Node.
-
----
-
-## 🚀 Guía de Inicio Rápido
-
-Las aplicaciones corren en puertos distintos para poder ejecutarlas en paralelo sin conflictos:
-
-### 1. Servidor de la Vitrina Pública (`App`)
-Para iniciar el portal de consulta pública:
-```bash
-cd App
-npm install
-npm run dev
-```
-La aplicación estará disponible en: **`http://localhost:6767/`**
-
-Para generar la compilación estática de producción (`dist/`):
-```bash
-npm run build
-```
+El servicio `proxy` expone el puerto `80` y enruta el tráfico interno de la siguiente manera:
+- **`/`** (Raíz) &rarr; Dirige a `app-public` (Vitrina pública, 100% estática).
+- **`/admin`** &rarr; Dirige a `admin-frontend` (Panel de edición y carga de PDFs).
+- **`/api`** &rarr; Dirige a `admin-backend` (Endpoints REST, protegidos por Basic Auth).
 
 ---
 
-### 2. Panel Administrativo (`CV-UI`)
-Esta aplicación requiere ejecutar tanto el frontend (puerto `6768`) como un backend en Node (Express en puerto `6769`) para interactuar con los scripts de Python.
+## 🚀 Despliegue con Docker Compose (Recomendado)
 
-#### Ejecución Estándar:
-```bash
-cd CV-UI
-npm install
-npm run dev
-```
-La aplicación estará disponible en: **`http://localhost:6768/`**
+Todo el ecosistema se levanta y se inicializa con un único comando:
 
-#### Ejecución mediante Distrobox (Recomendado en Fedora Kinoite):
-Si desarrollas dentro de un contenedor Distrobox llamado `dev-main`, puedes arrancar el servidor directamente con:
-```bash
-distrobox enter dev-main -- npm run dev
-```
+1. **Configurar el archivo `.env.production`**:
+   Asegúrate de configurar las credenciales deseadas para PostgreSQL y el Basic Auth de administración:
+   ```env
+   DB_USER=admin
+   DB_PASSWORD=admin_pass
+   ADMIN_USER=admin
+   ADMIN_PASSWORD=admin_pass
+   ```
+
+2. **Iniciar la aplicación**:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+3. **Verificar servicios**:
+   - Accede a la **Vitrina Pública**: **`http://localhost/`**
+   - Accede al **Panel Administrativo**: **`http://localhost/admin`**
+     *(Las credenciales por defecto son `admin` / `admin_pass`)*
 
 ---
 
-## 🐍 Integración de Python y Flujo de Trabajo
+## 🗄️ Modelo de Datos (PostgreSQL)
 
-El backend de `CV-UI` (`server.js`) interactúa de forma directa con los scripts de Python del directorio `cv_extractor`. 
+El archivo `scripts/init.sql` inicializa las tablas necesarias al primer arranque de la base de datos:
 
-### Entorno Virtual (`venv`)
-Se requiere un entorno virtual de Python instalado en el proyecto para asegurar que las dependencias de extracción de PDF estén disponibles. El backend busca automáticamente el intérprete de Python en las siguientes rutas (por orden de prioridad):
-- `CV-UI/venv/bin/python`
-- `CV-UI/.venv/bin/python`
-- `App/venv/bin/python`
-- `App/.venv/bin/python`
-- `/var/home/Moi/Documents/Projects/EduVitae/App/venv/bin/python`
+1. **`professors`**: Almacena el identificador, slug, adscripción (delegation_id del YAML) y un JSONB `profile_data` con la estructura jerárquica curricular.
+2. **`class_groups`**: Contiene los grupos dinámicos creados desde el panel (con referencia a la carrera del YAML).
+3. **`professor_groups`**: Tabla intermedia que vincula los profesores con los grupos de clases y guarda la materia que imparten.
 
-### Flujo de Carga de un Docente:
-1. **Subida y Extracción**: Desde la interfaz de `CV-UI` en el navegador, se sube el PDF del currículum. El backend ejecuta `cv_scraper.py` para parsear el contenido y devolver un JSON estructurado.
-2. **Edición Curricular**: La interfaz muestra los campos extraídos (Grados académicos, artículos, docencia, tesis, etc.) permitiendo corregir errores de escaneo u omisiones.
-3. **Exportación**: Al presionar **Listo (Exportar)**, el backend guarda los datos y ejecuta `format_cv.py`. Este script adapta la estructura final del docente y la escribe directamente como un archivo JSON en:
-   `/var/home/Moi/Documents/Projects/EduVitae/App/src/content/profesores/[nombre-del-docente].json`
-4. **Visualización**: La web de `App` leerá este nuevo JSON automáticamente en la siguiente compilación o recarga en caliente del entorno de desarrollo.
+---
+
+## 🔧 Script de Generación Estática (`generate-static-data.js`)
+
+Durante el build del contenedor de la vitrina pública (`app-public`), se ejecuta `scripts/generate-static-data.js`:
+1. Lee los archivos locales de referencia `delegations.yaml` y `careers.yaml`.
+2. Intenta conectar a PostgreSQL para obtener el listado de docentes y sus grupos asignados.
+3. **Mecanismo de Tolerancia (Build-Safe)**: Si la base de datos está offline o no es accesible en la compilación (por ejemplo, en compiladores de CI/CD aislados), el script registrará un *Warning* y cargará los perfiles desde la carpeta local de respaldo `data/reference/seed_professors/`, asegurando que la imagen de Docker siempre compile con éxito.
+4. Escribe los archivos JSON resultantes en `services/app-public/src/content/`.
